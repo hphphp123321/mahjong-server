@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	pb "github.com/hphphp123321/mahjong-common/services/mahjong/v1"
-	v1 "github.com/hphphp123321/mahjong-server/server"
+	"github.com/hphphp123321/mahjong-server/server"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
@@ -129,7 +129,7 @@ func main() {
 		PermitWithoutStream: true,
 	}
 	s := grpc.NewServer(grpc.KeepaliveEnforcementPolicy(kaep), grpc.KeepaliveParams(kasp))
-	server := v1.NewMahjongServer(10)
+	server := server.NewMahjongServer(10)
 	pb.RegisterMahjongServer(s, server)
 
 	if err := s.Serve(lis); err != nil {
