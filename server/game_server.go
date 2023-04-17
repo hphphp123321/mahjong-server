@@ -270,7 +270,7 @@ func (s *MahjongServer) Ready(stream pb.Mahjong_ReadyServer) error {
 				}
 			case *pb.ReadyRequest_Chat:
 				rep := &pb.ReadyReply{
-					Message: fmt.Sprintf("player: %s, send chat message", c.p.PlayerName),
+					Message: fmt.Sprintf("player: %s, chat: %s", c.p.PlayerName, in.GetChat().Message),
 					Reply: &pb.ReadyReply_Chat{Chat: &pb.ChatReply{
 						Message:    in.GetChat().Message,
 						PlayerName: c.p.PlayerName,
@@ -405,7 +405,7 @@ func (s *MahjongServer) LeaveRoom(c *client) error {
 	}).Debug("LeaveRoom success")
 	r = nil
 	c.readyStream = nil
-
+	c.p.RoomID = uuid.Nil
 	return nil
 }
 
