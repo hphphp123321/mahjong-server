@@ -129,8 +129,8 @@ func main() {
 		PermitWithoutStream: true,
 	}
 	s := grpc.NewServer(grpc.KeepaliveEnforcementPolicy(kaep), grpc.KeepaliveParams(kasp))
-	server := server.NewMahjongServer(10)
-	pb.RegisterMahjongServer(s, server)
+	mahjongServer := server.NewMahjongServer(10)
+	pb.RegisterMahjongServer(s, mahjongServer)
 
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)

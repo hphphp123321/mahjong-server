@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/hphphp123321/mahjong-common/common"
+	"github.com/hphphp123321/go-common"
 	"github.com/hphphp123321/mahjong-common/player"
 	"github.com/hphphp123321/mahjong-common/robots"
 	_ "github.com/hphphp123321/mahjong-common/robots/simple"
@@ -545,7 +545,7 @@ func (s *MahjongServer) handleAddRobotRequest(c *client, in *pb.ReadyRequest) er
 	}
 	log.Debugf("AddRobot Req: PlayerName: %s, RoomName: %s, request: %s", c.p.PlayerName, r.RoomName, in.GetAddRobot().String())
 	seat := int(in.GetAddRobot().RobotSeat)
-	if !common.Contain(seat, r.IdleSeats) {
+	if !common.SliceContain(r.IdleSeats, seat) {
 		err = c.sendReadyMessage(fmt.Sprintf("seat %v not valid", seat))
 		if err != nil {
 			return err

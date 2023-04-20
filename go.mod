@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/google/uuid v1.3.0
+	github.com/hphphp123321/go-common v0.0.0-20230419113915-7ac9d9c533b6
 	github.com/hphphp123321/mahjong-common v0.0.0-20230416092445-894e3b06d38f
 	github.com/sirupsen/logrus v1.9.0
 	google.golang.org/grpc v1.54.0

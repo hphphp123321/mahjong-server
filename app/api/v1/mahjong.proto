@@ -1,0 +1,683 @@
+syntax = "proto3";
+
+option go_package = "api.mahjong.v1";
+
+package mahjong;
+
+service Mahjong {
+  rpc Ping (Empty) returns (Empty) {}
+
+  rpc Login (LoginRequest) returns (LoginReply) {}
+
+  rpc Logout (Empty) returns (LogoutReply) {}
+
+  rpc CreateRoom (CreateRoomRequest) returns (CreateRoomReply) {}
+
+  rpc JoinRoom (JoinRoomRequest) returns (JoinRoomReply) {}
+
+  rpc RefreshRoom (RefreshRoomRequest) returns (RefreshRoomReply) {}
+
+  rpc Ready (stream ReadyRequest) returns (stream ReadyReply) {}
+
+  rpc Start (stream StartRequest) returns (stream StartReply) {}
+}
+
+message Empty {}
+
+message LoginRequest {
+  string playerName = 1;
+}
+
+message LoginReply {
+  string message = 1;
+  string id = 2;
+  optional ReconnectInfo reconnectInfo = 3;
+}
+
+message LogoutReply {
+  string message = 1;
+}
+
+message ReconnectInfo {
+  string message = 1;
+  oneof reconnectInfo {
+    RoomInfo room = 2;
+    Events events = 3;
+  }
+}
+
+message RoomInfo{
+  string roomID = 1;
+  string roomName = 2;
+  repeated PlayerInfo players = 3;
+}
+
+message PlayerInfo{
+  string playerName = 1;
+  int32 playerSeat = 2;
+  bool IsOwner = 3;
+}
+
+message CreateRoomRequest {
+  string roomName = 1;
+}
+
+message CreateRoomReply {
+  string message = 1;
+  RoomInfo room = 2;
+}
+
+message JoinRoomRequest {
+  string roomID = 1;
+}
+
+message JoinRoomReply {
+  string message = 1;
+  RoomInfo room = 2;
+  int32 seat = 3;
+}
+
+message RefreshRoomRequest {
+  optional string roomName = 1;
+}
+
+message RefreshRoomReply {
+  string message = 1;
+  repeated RoomInfo rooms = 2;
+}
+
+
+message ReadyRequest {
+  oneof request {
+    Empty ping = 1;
+    Empty getReady = 2;
+    Empty cancelReady = 3;
+    AddRobotRequest addRobot = 4;
+    RemovePlayerRequest removePlayer = 5;
+    Empty leaveRoom = 6;
+    Empty startGame = 7;
+    ChatRequest chat = 8;
+    Empty listRobots = 9;
+  }
+}
+
+message ReadyReply {
+  string message  = 1;
+  oneof reply {
+    Empty pong = 2;
+    PlayerJoinReply playerJoin = 3;
+    GetReadyReply getReady = 4;
+    CancelReadyReply cancelReady = 5;
+    AddRobotReply addRobot = 6;
+    PlayerLeaveReply playerLeave = 7;
+    Empty startGame = 8;
+    ChatReply chat = 9;
+    ListRobotsReply listRobots = 10;
+  }
+}
+
+message StartRequest {
+  oneof request {
+    Empty ping = 1;
+    Call action = 2;
+    ChatRequest chat = 3;
+  }
+}
+
+message StartReply {
+  string message = 1;
+  repeated Event events = 2;
+  oneof reply {
+    Empty pong = 3;
+    ChatReply chat = 5;
+  }
+  repeated Call validActions = 4;
+}
+
+message LeaveRoomRequest {
+  string roomID = 1;
+}
+
+message AddRobotRequest {
+  int32 robotSeat = 1;
+  string robotType = 2;
+}
+
+message RemovePlayerRequest {
+  int32 playerSeat = 1;
+}
+
+message GetReadyReply{
+  int32 seat = 1;
+  string playerName = 2;
+}
+
+message CancelReadyReply{
+  int32 seat = 1;
+  string playerName = 2;
+}
+
+message AddRobotReply{
+  int32 robotSeat = 1;
+  string robotLevel = 2;
+}
+
+message PlayerJoinReply{
+  int32 seat = 1;
+  string playerName = 2;
+}
+
+message PlayerLeaveReply{
+  int32 seat = 1;
+  int32 ownerSeat = 2;
+  string playerName = 3;
+}
+
+message ListRobotsReply {
+  repeated string robotTypes = 1;
+}
+
+message Call {
+  CallType type = 1;
+  repeated Tile tiles = 2;
+  repeated Wind fromWho = 3;
+}
+
+message Events {
+  repeated Event events = 1;
+}
+
+message Event {
+  oneof event {
+    EventStart eventStart = 1;
+    EventEnd eventEnd = 2;
+    EventGet eventGet = 3;
+    EventDiscard eventDiscard = 4;
+    EventCall eventCall = 5;
+    EventRiichi eventRiichi = 6;
+    EventNewIndicator eventNewIndicator = 7;
+    EventRon eventRon = 8;
+    EventTsumo eventTsumo = 9;
+    EventRyuuKyoKu eventRyuuKyoKu = 10;
+    EventFuriten eventFuriten = 11;
+    EventNagashiMangan eventNagashiMangan = 12;
+    EventTenhaiEnd eventTenhaiEnd = 13;
+  }
+}
+
+message EventStart {
+  WindRound windRound = 1;
+  Wind initWind = 2;
+  int64 seed = 3;
+  int32 numGame = 4;
+  int32  numHonba = 5;
+  int32 numRiichi = 6;
+  Tile  initDoraIndicator = 7;
+  repeated Tile initTiles = 8;
+  Rule gameRule = 9;
+}
+
+message EventEnd {
+  int32 eastPointsChange = 1;
+  int32 southPointsChange = 2;
+  int32 westPointsChange = 3;
+  int32 northPointsChange = 4;
+}
+
+message EventGet {
+  Wind who = 1;
+  optional Tile tile = 2;
+}
+
+message EventDiscard {
+  Wind who = 1;
+  int32 tile = 2;
+  bool tsumoGiri = 3;
+}
+
+message EventCall {
+  Wind who = 1;
+  Call call = 2;
+}
+
+message EventRiichi {
+  Wind who = 1;
+  int32 step = 2;
+}
+
+message EventNewIndicator {
+  Tile tile = 1;
+}
+
+message EventRon {
+  Wind who = 1;
+  Wind fromWho = 2;
+  repeated Tile handTiles = 3;
+  Tile winTile = 4;
+  Result result = 5;
+}
+
+message EventTsumo {
+  Wind who = 1;
+  repeated Tile handTiles = 2;
+  Tile winTile = 3;
+  Result result = 4;
+}
+
+message EventRyuuKyoKu {
+  optional Wind who = 1;
+  repeated Tile handTiles = 2;
+  RyuuKyoKuReason reason = 3;
+}
+
+message EventFuriten {
+  Wind who = 1;
+  FuritenReason reason = 2;
+}
+
+message EventNagashiMangan {
+  Wind who = 1;
+}
+
+message EventTenhaiEnd {
+  Wind who = 1;
+  repeated Tile handTiles = 2;
+  repeated TileClass tenhaiSlice = 3;
+}
+
+message Result {
+  YakuResult yakuResult = 1;
+  ScoreResult scoreResult = 2;
+}
+
+message Rule {
+  int32 gameLength = 1;
+  bool isOpenTanyao = 2;
+  bool hasAkaDora = 3;
+  Limit renhouLimit = 4;
+  bool isHaiteiFromLiveOnly = 5;
+  bool isUra = 6;
+  bool isIpatsu = 7;
+  bool isGreenRequired = 8;
+  bool isRinshanFu = 9;
+  bool isManganRound = 10;
+  bool isKazoeYakuman = 11;
+  bool isDoubleYakumans = 12;
+  bool isYakumanSum = 13;
+  int32 honbaValue = 14;
+  bool isSanChaHou = 15;
+  bool isNagashiMangan = 16;
+}
+
+
+message ChatRequest {
+  string message = 1;
+}
+
+message ChatReply {
+  string message = 1;
+  string playerName = 2;
+}
+
+
+message ScoreResult {
+  int32 payRon = 1;
+  int32 payRonDealer = 2;
+  int32 payTsumo = 3;
+  int32 payTsumoDealer = 4;
+  Limit special = 5;
+  int32 han = 6;
+  int32 fu = 7;
+}
+
+message YakuResult {
+  repeated YakuSet yakuSet = 1;
+  repeated Yakuman yakumans = 2;
+  repeated YakuSet bonuses = 3;
+  repeated FuInfo fus = 4;
+  bool isClosed = 5;
+}
+
+message YakuSet {
+  Yaku yaku = 1;
+  int32 han = 2;
+}
+
+message FuInfo {
+  Fu fu = 1;
+  int32 points = 2;
+}
+
+enum Limit {
+  LimitNone = 0;
+  LimitMangan = 1;
+  LimitHaneman = 2;
+  LimitBaiman = 3;
+  LimitSanbaiman = 4;
+  LimitYakuman = 5;
+}
+
+enum RyuuKyoKuReason {
+  RyuuKyokuNormal = 0;
+  RyuuKyokuKyuuShuKyuuHai = 1;
+  RyuuKyokuSuuChaRiichi = 2;
+  RyuuKyokuSuuKaiKan = 3;
+  RyuuKyokuSuufonRenda = 4;
+  RyuuKyokuSanChaHou = 5;
+}
+
+enum FuritenReason {
+  FuritenNone = 0;
+  FuritenJun = 1;
+  FuritenDiscard = 2;
+  FuritenRiichi = 3;
+}
+
+enum Wind {
+  WindDummy = 0;
+  East = 1; // 东
+  South = 2; // 南
+  West = 3; // 西
+  North = 4; // 北
+}
+
+enum WindRound {
+  WindRoundDummy = 0;
+  WindRoundEast1 = 1;
+  WindRoundEast2 = 2;
+  WindRoundEast3 = 3;
+  WindRoundEast4 = 4;
+  WindRoundSouth1 = 5;
+  WindRoundSouth2 = 6;
+  WindRoundSouth3 = 7;
+  WindRoundSouth4 = 8;
+  WindRoundWest1 = 9;
+  WindRoundWest2 = 10;
+  WindRoundWest3 = 11;
+  WindRoundWest4 = 12;
+  WindRoundNorth1 = 13;
+  WindRoundNorth2 = 14;
+  WindRoundNorth3 = 15;
+  WindRoundNorth4 = 16;
+}
+
+enum CallType{
+  Skip = 0;
+  Discard = 1;
+  Chi = 2;
+  Pon = 3;
+  DaiMinKan = 4;
+  ShouMinKan = 5;
+  AnKan = 6;
+  Riichi = 7;
+  Ron = 8;
+  Tsumo = 9;
+  KyuShuKyuHai = 10;
+  ChanKan = 11;
+  Next = 12;
+}
+
+enum Fu {
+  FuNone = 0;
+  FuBase = 1;
+  FuBaseClosedRon = 2;
+  FuBase7 = 3;
+  FuSet = 4;
+  FuTsumo = 5;
+  FuMeld = 6;
+  FuNoOpenFu = 7;
+  FuBadWait = 8;
+  FuPair = 9;
+}
+
+enum Yaku {
+  YakuNone = 0;
+  YakuRiichi = 1;
+  YakuDaburi = 2;
+  YakuIppatsu = 3;
+  YakuTsumo = 4;
+  YakuTanyao = 5;
+  YakuChanta = 6;
+  YakuJunchan = 7;
+  YakuHonrouto = 8;
+  YakuYakuhai = 9;
+  YakuHaku = 10;
+  YakuHatsu = 11;
+  YakuChun = 12;
+  YakuWindRound = 13;
+  YakuWindSelf = 14;
+  YakuTon = 15;
+  YakuNan = 16;
+  YakuSja = 17;
+  YakuPei = 18;
+  YakuTonSelf = 19;
+  YakuNanSelf = 20;
+  YakuSjaSelf = 21;
+  YakuPeiSelf = 22;
+  YakuTonRound = 23;
+  YakuNanRound = 24;
+  YakuSjaRound = 25;
+  YakuPeiRound = 26;
+  YakuChiitoi = 27;
+  YakuToitoi = 28;
+  YakuSanankou = 29;
+  YakuSankantsu = 30;
+  YakuSanshoku = 31;
+  YakuShousangen = 32;
+  YakuPinfu = 33;
+  YakuIppeiko = 34;
+  YakuRyanpeikou = 35;
+  YakuItsuu = 36;
+  YakuSanshokuDoukou = 37;
+  YakuHonitsu = 38;
+  YakuChinitsu = 39;
+  YakuDora = 40;
+  YakuUraDora = 41;
+  YakuAkaDora = 42;
+  YakuRenhou = 43;
+  YakuHaitei = 44;
+  YakuHoutei = 45;
+  YakuRinshan = 46;
+  YakuChankan = 47;
+}
+
+enum Yakuman {
+  YakumanNone = 0;
+  YakumanKokushi = 1;
+  YakumanKokushi13 = 2;
+  YakumanSuukantsu = 3;
+  YakumanSuuankou = 4;
+  YakumanSuuankouTanki = 5;
+  YakumanDaisangen = 6;
+  YakumanShousuushi = 7;
+  YakumanDaisuushi = 8;
+  YakumanRyuuiisou = 9;
+  YakumanTsuiisou = 10;
+  YakumanChinrouto = 11;
+  YakumanChuurenpooto = 12;
+  YakumanChuurenpooto9 = 13;
+  YakumanTenhou = 14;
+  YakumanChihou = 15;
+  YakumanRenhou = 16;
+}
+
+enum Tile {
+  TileDummy = 0;
+  Man1T1 = 1;
+  Man1T2 = 2;
+  Man1T3 = 3;
+  Man1T4 = 4;
+  Man2T1 = 5;
+  Man2T2 = 6;
+  Man2T3 = 7;
+  Man2T4 = 8;
+  Man3T1 = 9;
+  Man3T2 = 10;
+  Man3T3 = 11;
+  Man3T4 = 12;
+  Man4T1 = 13;
+  Man4T2 = 14;
+  Man4T3 = 15;
+  Man4T4 = 16;
+  Man5T1 = 17;
+  Man5T2 = 18;
+  Man5T3 = 19;
+  Man5T4 = 20;
+  Man6T1 = 21;
+  Man6T2 = 22;
+  Man6T3 = 23;
+  Man6T4 = 24;
+  Man7T1 = 25;
+  Man7T2 = 26;
+  Man7T3 = 27;
+  Man7T4 = 28;
+  Man8T1 = 29;
+  Man8T2 = 30;
+  Man8T3 = 31;
+  Man8T4 = 32;
+  Man9T1 = 33;
+  Man9T2 = 34;
+  Man9T3 = 35;
+  Man9T4 = 36;
+  Pin1T1 = 37;
+  Pin1T2 = 38;
+  Pin1T3 = 39;
+  Pin1T4 = 40;
+  Pin2T1 = 41;
+  Pin2T2 = 42;
+  Pin2T3 = 43;
+  Pin2T4 = 44;
+  Pin3T1 = 45;
+  Pin3T2 = 46;
+  Pin3T3 = 47;
+  Pin3T4 = 48;
+  Pin4T1 = 49;
+  Pin4T2 = 50;
+  Pin4T3 = 51;
+  Pin4T4 = 52;
+  Pin5T1 = 53;
+  Pin5T2 = 54;
+  Pin5T3 = 55;
+  Pin5T4 = 56;
+  Pin6T1 = 57;
+  Pin6T2 = 58;
+  Pin6T3 = 59;
+  Pin6T4 = 60;
+  Pin7T1 = 61;
+  Pin7T2 = 62;
+  Pin7T3 = 63;
+  Pin7T4 = 64;
+  Pin8T1 = 65;
+  Pin8T2 = 66;
+  Pin8T3 = 67;
+  Pin8T4 = 68;
+  Pin9T1 = 69;
+  Pin9T2 = 70;
+  Pin9T3 = 71;
+  Pin9T4 = 72;
+  Sou1T1 = 73;
+  Sou1T2 = 74;
+  Sou1T3 = 75;
+  Sou1T4 = 76;
+  Sou2T1 = 77;
+  Sou2T2 = 78;
+  Sou2T3 = 79;
+  Sou2T4 = 80;
+  Sou3T1 = 81;
+  Sou3T2 = 82;
+  Sou3T3 = 83;
+  Sou3T4 = 84;
+  Sou4T1 = 85;
+  Sou4T2 = 86;
+  Sou4T3 = 87;
+  Sou4T4 = 88;
+  Sou5T1 = 89;
+  Sou5T2 = 90;
+  Sou5T3 = 91;
+  Sou5T4 = 92;
+  Sou6T1 = 93;
+  Sou6T2 = 94;
+  Sou6T3 = 95;
+  Sou6T4 = 96;
+  Sou7T1 = 97;
+  Sou7T2 = 98;
+  Sou7T3 = 99;
+  Sou7T4 = 100;
+  Sou8T1 = 101;
+  Sou8T2 = 102;
+  Sou8T3 = 103;
+  Sou8T4 = 104;
+  Sou9T1 = 105;
+  Sou9T2 = 106;
+  Sou9T3 = 107;
+  Sou9T4 = 108;
+  Ton1 = 109;
+  Ton2 = 110;
+  Ton3 = 111;
+  Ton4 = 112;
+  Nan1 = 113;
+  Nan2 = 114;
+  Nan3 = 115;
+  Nan4 = 116;
+  Shaa1 = 117;
+  Shaa2 = 118;
+  Shaa3 = 119;
+  Shaa4 = 120;
+  Pei1 = 121;
+  Pei2 = 122;
+  Pei3 = 123;
+  Pei4 = 124;
+  Haku1 = 125;
+  Haku2 = 126;
+  Haku3 = 127;
+  Haku4 = 128;
+  Hatsu1 = 129;
+  Hatsu2 = 130;
+  Hatsu3 = 131;
+  Hatsu4 = 132;
+  Chun1 = 133;
+  Chun2 = 134;
+  Chun3 = 135;
+  Chun4 = 136;
+}
+
+enum TileClass {
+  TileClassDummy = 0;
+  Man1 = 1;
+  Man2 = 2;
+  Man3 = 3;
+  Man4 = 4;
+  Man5 = 5;
+  Man6 = 6;
+  Man7 = 7;
+  Man8 = 8;
+  Man9 = 9;
+  Pin1 = 10;
+  Pin2 = 11;
+  Pin3 = 12;
+  Pin4 = 13;
+  Pin5 = 14;
+  Pin6 = 15;
+  Pin7 = 16;
+  Pin8 = 17;
+  Pin9 = 18;
+  Sou1 = 19;
+  Sou2 = 20;
+  Sou3 = 21;
+  Sou4 = 22;
+  Sou5 = 23;
+  Sou6 = 24;
+  Sou7 = 25;
+  Sou8 = 26;
+  Sou9 = 27;
+  Ton = 28;
+  Nan = 29;
+  Shaa = 30;
+  Pei = 31;
+  Haku = 32;
+  Hatsu = 33;
+  Chun = 34;
+  RedMan5 = 35;
+  RedPin5 = 36;
+  RedSou5 = 37;
+};
