@@ -69,7 +69,22 @@ func (m MahjongServer) RefreshRoom(ctx context.Context, request *pb.RefreshRoomR
 
 func (m MahjongServer) Ready(server pb.Mahjong_ReadyServer) error {
 	//TODO implement me
-	panic("implement me")
+	done := make(chan error)
+	replyChan := make(chan *pb.ReadyReply)
+	ctx := server.Context()
+	StartReadyStream(ctx, server, done, replyChan)
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case err := <-done:
+		return err
+	case reply := <-replyChan:
+		// TODO BoardCast in Room
+		if err := server.Send(reply); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (m MahjongServer) Start(server pb.Mahjong_StartServer) error {
