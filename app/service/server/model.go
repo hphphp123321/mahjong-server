@@ -25,17 +25,16 @@ type JoinRoomRequest struct {
 }
 
 type JoinRoomReply struct {
-	RoomName   string
 	RoomInfo   *room.Info
 	Seat       int
 	PlayerName string
 }
 
-type RefreshRoomRequest struct {
+type ListRoomsRequest struct {
 	RoomNameFilter string
 }
 
-type RefreshRoomReply struct {
+type ListRoomsReply struct {
 	RoomInfos []*room.Info
 }
 
@@ -69,6 +68,10 @@ type PlayerLeaveReply struct {
 	PlayerName string
 }
 
-type ListRobotReply struct {
+type ListRobotsReply struct {
 	RobotTypes []string
+}
+
+type ListPlayerIDsReply struct {
+	PlayerIDs []string
 }

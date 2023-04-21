@@ -10,15 +10,21 @@ import (
 
 func ToPbLoginReply(reply *server.LoginReply) *pb.LoginReply {
 	return &pb.LoginReply{
-		Message:       "",
+		Message:       LoginMsg(reply.ID),
 		Id:            reply.ID,
 		ReconnectInfo: nil,
 	}
 }
 
+func ToPbLogoutReply() *pb.LogoutReply {
+	return &pb.LogoutReply{
+		Message: LogoutMsg(),
+	}
+}
+
 func ToPbCreateRoomReply(reply *server.CreateRoomReply) *pb.CreateRoomReply {
 	return &pb.CreateRoomReply{
-		Message: "",
+		Message: CreateMsg(reply.RoomID),
 		Room: &pb.RoomInfo{
 			RoomID: reply.RoomID,
 		},
@@ -35,9 +41,9 @@ func MapToPlayerInfo(playerInfo *player.Info) *pb.PlayerInfo {
 
 func ToPbJoinRoomReply(reply *server.JoinRoomReply) *pb.JoinRoomReply {
 	return &pb.JoinRoomReply{
-		Message: "",
+		Message: JoinRoomMsg(reply.RoomInfo.Name),
 		Room: &pb.RoomInfo{
-			RoomName: reply.RoomName,
+			RoomName: reply.RoomInfo.Name,
 			Players:  common.MapSlice(reply.RoomInfo.PlayerInfos, MapToPlayerInfo),
 		},
 	}
@@ -51,9 +57,13 @@ func MapToRoomInfo(roomInfo *room.Info) *pb.RoomInfo {
 	}
 }
 
-func ToPbRefreshRoomReply(reply *server.RefreshRoomReply) *pb.RefreshRoomReply {
-	return &pb.RefreshRoomReply{
-		Message: "",
+func ToPbListRoomsReply(reply *server.ListRoomsReply) *pb.ListRoomsReply {
+	var roomNames []string
+	for _, roomInfo := range reply.RoomInfos {
+		roomNames = append(roomNames, roomInfo.Name)
+	}
+	return &pb.ListRoomsReply{
+		Message: ListRoomsMsg(roomNames),
 		Rooms:   common.MapSlice(reply.RoomInfos, MapToRoomInfo),
 	}
 }

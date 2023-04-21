@@ -114,7 +114,7 @@ func (s *MahjongServer) RefreshRoom(ctx context.Context, in *pb.RefreshRoomReque
 		}
 	}
 	log.WithFields(log.Fields{
-		"Event": "RefreshRoom",
+		"Event": "ListRooms",
 	}).Debug("refresh room success")
 	return &pb.RefreshRoomReply{
 		Message: "refresh room success, room count: " + fmt.Sprint(len(roomSlice)),

@@ -3,14 +3,16 @@ package controller
 import (
 	"context"
 	pb "github.com/hphphp123321/mahjong-server/app/api/v1"
-	"github.com/hphphp123321/mahjong-server/app/service/playerid"
+	"github.com/hphphp123321/mahjong-server/app/component/idservice"
 	"github.com/hphphp123321/mahjong-server/app/service/server"
 )
 
 type MahjongServer struct {
 	pb.UnimplementedMahjongServer
-	idService playerid.IDService
+	idService idservice.IDService
 	s         server.Server
+
+	clients map[string]*Client
 }
 
 func (m MahjongServer) Ping(ctx context.Context, empty *pb.Empty) (*pb.Empty, error) {
@@ -21,6 +23,8 @@ func (m MahjongServer) Login(ctx context.Context, request *pb.LoginRequest) (*pb
 	reply, err := m.s.Login(ctx, &server.LoginRequest{
 		Name: request.PlayerName,
 	})
+	cid := string(reply.ID)
+	m.clients[cid] = NewClient(cid)
 	if err != nil {
 		return nil, err
 	}
@@ -31,9 +35,7 @@ func (m MahjongServer) Logout(ctx context.Context, empty *pb.Empty) (*pb.LogoutR
 	if err := m.s.Logout(ctx); err != nil {
 		return nil, err
 	}
-	return &pb.LogoutReply{
-		Message: "",
-	}, nil
+	return ToPbLogoutReply(), nil
 }
 
 func (m MahjongServer) CreateRoom(ctx context.Context, request *pb.CreateRoomRequest) (*pb.CreateRoomReply, error) {
@@ -53,41 +55,43 @@ func (m MahjongServer) JoinRoom(ctx context.Context, request *pb.JoinRoomRequest
 	if err != nil {
 		return nil, err
 	}
-	// TODO BoardCast
+	if err := BoardCastReadyReply(ctx, &m, ToPbPlayerJoinReply(reply)); err != nil {
+		//TODO LOG
+	}
 	return ToPbJoinRoomReply(reply), nil
 }
 
-func (m MahjongServer) RefreshRoom(ctx context.Context, request *pb.RefreshRoomRequest) (*pb.RefreshRoomReply, error) {
-	reply, err := m.s.RefreshRoom(ctx, &server.RefreshRoomRequest{
+func (m MahjongServer) ListRooms(ctx context.Context, request *pb.ListRoomsRequest) (*pb.ListRoomsReply, error) {
+	reply, err := m.s.ListRooms(ctx, &server.ListRoomsRequest{
 		RoomNameFilter: *request.RoomName,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return ToPbRefreshRoomReply(reply), nil
+	return ToPbListRoomsReply(reply), nil
 }
 
-func (m MahjongServer) Ready(server pb.Mahjong_ReadyServer) error {
+func (m MahjongServer) Ready(stream pb.Mahjong_ReadyServer) error {
 	//TODO implement me
-	done := make(chan error)
-	replyChan := make(chan *pb.ReadyReply)
-	ctx := server.Context()
-	StartReadyStream(ctx, server, done, replyChan)
+	ctx := stream.Context()
+	if err := AddReadyStream(ctx, stream, &m); err != nil {
+		return err
+	}
+	done, replyChan := StartReadyStream(ctx, stream, &m)
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	case err := <-done:
 		return err
 	case reply := <-replyChan:
-		// TODO BoardCast in Room
-		if err := server.Send(reply); err != nil {
-			return err
+		if err := BoardCastReadyReply(ctx, &m, reply); err != nil {
+			//TODO LOG
 		}
 	}
 	return nil
 }
 
-func (m MahjongServer) Start(server pb.Mahjong_StartServer) error {
+func (m MahjongServer) Game(server pb.Mahjong_GameServer) error {
 	//TODO implement me
 	panic("implement me")
 }

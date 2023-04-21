@@ -8,9 +8,6 @@ import (
 )
 
 type client struct {
-	readyStream pb.Mahjong_ReadyServer
-	startStream pb.Mahjong_StartServer
-
 	lastTime time.Time
 	online   bool
 

@@ -15,11 +15,11 @@ service Mahjong {
 
   rpc JoinRoom (JoinRoomRequest) returns (JoinRoomReply) {}
 
-  rpc RefreshRoom (RefreshRoomRequest) returns (RefreshRoomReply) {}
+  rpc ListRooms (ListRoomsRequest) returns (ListRoomsReply) {}
 
   rpc Ready (stream ReadyRequest) returns (stream ReadyReply) {}
 
-  rpc Start (stream StartRequest) returns (stream StartReply) {}
+  rpc Game (stream GameRequest) returns (stream GameReply) {}
 }
 
 message Empty {}
@@ -77,11 +77,11 @@ message JoinRoomReply {
   int32 seat = 3;
 }
 
-message RefreshRoomRequest {
+message ListRoomsRequest {
   optional string roomName = 1;
 }
 
-message RefreshRoomReply {
+message ListRoomsReply {
   string message = 1;
   repeated RoomInfo rooms = 2;
 }
@@ -116,7 +116,7 @@ message ReadyReply {
   }
 }
 
-message StartRequest {
+message GameRequest {
   oneof request {
     Empty ping = 1;
     Call action = 2;
@@ -124,7 +124,7 @@ message StartRequest {
   }
 }
 
-message StartReply {
+message GameReply {
   string message = 1;
   repeated Event events = 2;
   oneof reply {
@@ -159,7 +159,7 @@ message CancelReadyReply{
 
 message AddRobotReply{
   int32 robotSeat = 1;
-  string robotLevel = 2;
+  string robotType = 2;
 }
 
 message PlayerJoinReply{
@@ -316,7 +316,6 @@ message ChatRequest {
 
 message ChatReply {
   string message = 1;
-  string playerName = 2;
 }
 
 

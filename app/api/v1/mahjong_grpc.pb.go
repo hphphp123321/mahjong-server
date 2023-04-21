@@ -27,9 +27,9 @@ type MahjongClient interface {
 	Logout(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*LogoutReply, error)
 	CreateRoom(ctx context.Context, in *CreateRoomRequest, opts ...grpc.CallOption) (*CreateRoomReply, error)
 	JoinRoom(ctx context.Context, in *JoinRoomRequest, opts ...grpc.CallOption) (*JoinRoomReply, error)
-	RefreshRoom(ctx context.Context, in *RefreshRoomRequest, opts ...grpc.CallOption) (*RefreshRoomReply, error)
+	ListRooms(ctx context.Context, in *ListRoomsRequest, opts ...grpc.CallOption) (*ListRoomsReply, error)
 	Ready(ctx context.Context, opts ...grpc.CallOption) (Mahjong_ReadyClient, error)
-	Start(ctx context.Context, opts ...grpc.CallOption) (Mahjong_StartClient, error)
+	Game(ctx context.Context, opts ...grpc.CallOption) (Mahjong_GameClient, error)
 }
 
 type mahjongClient struct {
@@ -85,9 +85,9 @@ func (c *mahjongClient) JoinRoom(ctx context.Context, in *JoinRoomRequest, opts 
 	return out, nil
 }
 
-func (c *mahjongClient) RefreshRoom(ctx context.Context, in *RefreshRoomRequest, opts ...grpc.CallOption) (*RefreshRoomReply, error) {
-	out := new(RefreshRoomReply)
-	err := c.cc.Invoke(ctx, "/mahjong.Mahjong/RefreshRoom", in, out, opts...)
+func (c *mahjongClient) ListRooms(ctx context.Context, in *ListRoomsRequest, opts ...grpc.CallOption) (*ListRoomsReply, error) {
+	out := new(ListRoomsReply)
+	err := c.cc.Invoke(ctx, "/mahjong.Mahjong/ListRooms", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -125,31 +125,31 @@ func (x *mahjongReadyClient) Recv() (*ReadyReply, error) {
 	return m, nil
 }
 
-func (c *mahjongClient) Start(ctx context.Context, opts ...grpc.CallOption) (Mahjong_StartClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Mahjong_ServiceDesc.Streams[1], "/mahjong.Mahjong/Start", opts...)
+func (c *mahjongClient) Game(ctx context.Context, opts ...grpc.CallOption) (Mahjong_GameClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Mahjong_ServiceDesc.Streams[1], "/mahjong.Mahjong/Game", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &mahjongStartClient{stream}
+	x := &mahjongGameClient{stream}
 	return x, nil
 }
 
-type Mahjong_StartClient interface {
-	Send(*StartRequest) error
-	Recv() (*StartReply, error)
+type Mahjong_GameClient interface {
+	Send(*GameRequest) error
+	Recv() (*GameReply, error)
 	grpc.ClientStream
 }
 
-type mahjongStartClient struct {
+type mahjongGameClient struct {
 	grpc.ClientStream
 }
 
-func (x *mahjongStartClient) Send(m *StartRequest) error {
+func (x *mahjongGameClient) Send(m *GameRequest) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *mahjongStartClient) Recv() (*StartReply, error) {
-	m := new(StartReply)
+func (x *mahjongGameClient) Recv() (*GameReply, error) {
+	m := new(GameReply)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -165,9 +165,9 @@ type MahjongServer interface {
 	Logout(context.Context, *Empty) (*LogoutReply, error)
 	CreateRoom(context.Context, *CreateRoomRequest) (*CreateRoomReply, error)
 	JoinRoom(context.Context, *JoinRoomRequest) (*JoinRoomReply, error)
-	RefreshRoom(context.Context, *RefreshRoomRequest) (*RefreshRoomReply, error)
+	ListRooms(context.Context, *ListRoomsRequest) (*ListRoomsReply, error)
 	Ready(Mahjong_ReadyServer) error
-	Start(Mahjong_StartServer) error
+	Game(Mahjong_GameServer) error
 	mustEmbedUnimplementedMahjongServer()
 }
 
@@ -190,14 +190,14 @@ func (UnimplementedMahjongServer) CreateRoom(context.Context, *CreateRoomRequest
 func (UnimplementedMahjongServer) JoinRoom(context.Context, *JoinRoomRequest) (*JoinRoomReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method JoinRoom not implemented")
 }
-func (UnimplementedMahjongServer) RefreshRoom(context.Context, *RefreshRoomRequest) (*RefreshRoomReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RefreshRoom not implemented")
+func (UnimplementedMahjongServer) ListRooms(context.Context, *ListRoomsRequest) (*ListRoomsReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListRooms not implemented")
 }
 func (UnimplementedMahjongServer) Ready(Mahjong_ReadyServer) error {
 	return status.Errorf(codes.Unimplemented, "method Ready not implemented")
 }
-func (UnimplementedMahjongServer) Start(Mahjong_StartServer) error {
-	return status.Errorf(codes.Unimplemented, "method Start not implemented")
+func (UnimplementedMahjongServer) Game(Mahjong_GameServer) error {
+	return status.Errorf(codes.Unimplemented, "method Game not implemented")
 }
 func (UnimplementedMahjongServer) mustEmbedUnimplementedMahjongServer() {}
 
@@ -302,20 +302,20 @@ func _Mahjong_JoinRoom_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Mahjong_RefreshRoom_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RefreshRoomRequest)
+func _Mahjong_ListRooms_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRoomsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MahjongServer).RefreshRoom(ctx, in)
+		return srv.(MahjongServer).ListRooms(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/mahjong.Mahjong/RefreshRoom",
+		FullMethod: "/mahjong.Mahjong/ListRooms",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MahjongServer).RefreshRoom(ctx, req.(*RefreshRoomRequest))
+		return srv.(MahjongServer).ListRooms(ctx, req.(*ListRoomsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -346,26 +346,26 @@ func (x *mahjongReadyServer) Recv() (*ReadyRequest, error) {
 	return m, nil
 }
 
-func _Mahjong_Start_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(MahjongServer).Start(&mahjongStartServer{stream})
+func _Mahjong_Game_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(MahjongServer).Game(&mahjongGameServer{stream})
 }
 
-type Mahjong_StartServer interface {
-	Send(*StartReply) error
-	Recv() (*StartRequest, error)
+type Mahjong_GameServer interface {
+	Send(*GameReply) error
+	Recv() (*GameRequest, error)
 	grpc.ServerStream
 }
 
-type mahjongStartServer struct {
+type mahjongGameServer struct {
 	grpc.ServerStream
 }
 
-func (x *mahjongStartServer) Send(m *StartReply) error {
+func (x *mahjongGameServer) Send(m *GameReply) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *mahjongStartServer) Recv() (*StartRequest, error) {
-	m := new(StartRequest)
+func (x *mahjongGameServer) Recv() (*GameRequest, error) {
+	m := new(GameRequest)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -400,8 +400,8 @@ var Mahjong_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Mahjong_JoinRoom_Handler,
 		},
 		{
-			MethodName: "RefreshRoom",
-			Handler:    _Mahjong_RefreshRoom_Handler,
+			MethodName: "ListRooms",
+			Handler:    _Mahjong_ListRooms_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
@@ -412,8 +412,8 @@ var Mahjong_ServiceDesc = grpc.ServiceDesc{
 			ClientStreams: true,
 		},
 		{
-			StreamName:    "Start",
-			Handler:       _Mahjong_Start_Handler,
+			StreamName:    "Game",
+			Handler:       _Mahjong_Game_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},
