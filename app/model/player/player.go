@@ -7,8 +7,7 @@ type Player struct {
 	RoomID string
 	Seat   int
 
-	ID      string
-	IsOwner bool
+	ID string
 
 	isReady bool
 }
@@ -22,15 +21,14 @@ func NewPlayer(id string, name string) *Player {
 
 func (p *Player) GetInfo() *Info {
 	return &Info{
-		Name:    p.Name,
-		Seat:    p.Seat,
-		IsOwner: p.IsOwner,
+		Name: p.Name,
+		Seat: p.Seat,
 	}
 }
 
 func (p *Player) GetReady() error {
 	if p.isReady {
-		return errs.ErrPlayerIsReady
+		return errs.ErrPlayerReady
 	}
 	p.isReady = true
 	return nil
@@ -38,7 +36,7 @@ func (p *Player) GetReady() error {
 
 func (p *Player) CancelReady() error {
 	if !p.isReady {
-		return errs.ErrPlayerIsNotReady
+		return errs.ErrPlayerNotReady
 	}
 	p.isReady = false
 	return nil
@@ -63,6 +61,5 @@ func (p *Player) LeaveRoom() error {
 	}
 	p.RoomID = ""
 	p.Seat = 0
-	p.IsOwner = false
 	return nil
 }

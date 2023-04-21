@@ -37,12 +37,39 @@ func (i ImplServer) GetName(ctx context.Context) (string, error) {
 	}
 }
 
+func (i ImplServer) getPlayer(ctx context.Context) (*player.Player, error) {
+	pid, err := i.GetID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	p, ok := i.players[pid]
+	if !ok {
+		return nil, errs.ErrPlayerNotFound
+	}
+	return p, nil
+}
+
+func (i ImplServer) getRoom(ctx context.Context) (*room.Room, error) {
+	p, err := i.getPlayer(ctx)
+	if err != nil {
+		return nil, err
+	}
+	r, ok := i.rooms[p.RoomID]
+	if !ok {
+		return nil, errs.ErrRoomNotFound
+	}
+	return r, nil
+}
+
 func (i ImplServer) Login(ctx context.Context, request *LoginRequest) (reply *LoginReply, err error) {
 	id, err := global.IDGenerator.GeneratePlayerID()
 	if err != nil {
 		return nil, err
 	}
 	i.players[id] = player.NewPlayer(id, request.Name)
+	// add id to header
+	header := metadata.New(map[string]string{"id": id})
+	ctx = metadata.NewOutgoingContext(ctx, header)
 	return &LoginReply{
 		ID: id,
 	}, nil
@@ -66,7 +93,10 @@ func (i ImplServer) CreateRoom(ctx context.Context, request *CreateRoomRequest) 
 	if err != nil {
 		return nil, err
 	}
-	r := room.NewRoom(i.players[pid], request.RoomName, rid)
+	r, err := room.NewRoom(i.players[pid], request.RoomName, rid)
+	if err != nil {
+		return nil, err
+	}
 	i.rooms[rid] = r
 	return &CreateRoomReply{
 		RoomID: rid,
@@ -74,19 +104,15 @@ func (i ImplServer) CreateRoom(ctx context.Context, request *CreateRoomRequest) 
 }
 
 func (i ImplServer) JoinRoom(ctx context.Context, request *JoinRoomRequest) (joinReply *JoinRoomReply, err error) {
-	pid, err := i.GetID(ctx)
+	p, err := i.getPlayer(ctx)
 	if err != nil {
 		return nil, err
-	}
-	p, ok := i.players[pid]
-	if !ok {
-		return nil, errs.ErrPlayerNotFound
 	}
 	r, ok := i.rooms[request.RoomID]
 	if !ok {
 		return nil, errs.ErrRoomNotFound
 	}
-	if err := r.Join(i.players[pid]); err != nil {
+	if err := r.Join(p); err != nil {
 		return nil, err
 	}
 	return &JoinRoomReply{
@@ -112,13 +138,9 @@ func (i ImplServer) ListRooms(ctx context.Context, request *ListRoomsRequest) (r
 }
 
 func (i ImplServer) GetReady(ctx context.Context) (reply *GetReadyReply, err error) {
-	pid, err := i.GetID(ctx)
+	p, err := i.getPlayer(ctx)
 	if err != nil {
 		return nil, err
-	}
-	p, ok := i.players[pid]
-	if !ok {
-		return nil, errs.ErrPlayerNotFound
 	}
 	if err := p.GetReady(); err != nil {
 		return nil, err
@@ -130,13 +152,9 @@ func (i ImplServer) GetReady(ctx context.Context) (reply *GetReadyReply, err err
 }
 
 func (i ImplServer) CancelReady(ctx context.Context) (reply *CancelReadyReply, err error) {
-	pid, err := i.GetID(ctx)
+	p, err := i.getPlayer(ctx)
 	if err != nil {
 		return nil, err
-	}
-	p, ok := i.players[pid]
-	if !ok {
-		return nil, errs.ErrPlayerNotFound
 	}
 	if err := p.CancelReady(); err != nil {
 		return nil, err
@@ -148,13 +166,9 @@ func (i ImplServer) CancelReady(ctx context.Context) (reply *CancelReadyReply, e
 }
 
 func (i ImplServer) LeaveRoom(ctx context.Context) (reply *PlayerLeaveReply, err error) {
-	pid, err := i.GetID(ctx)
+	p, err := i.getPlayer(ctx)
 	if err != nil {
 		return nil, err
-	}
-	p, ok := i.players[pid]
-	if !ok {
-		return nil, errs.ErrPlayerNotFound
 	}
 	if p.RoomID == "" {
 		return nil, errs.ErrPlayerNotInRoom
@@ -182,8 +196,32 @@ func (i ImplServer) AddRobot(ctx context.Context, request *AddRobotRequest) (rep
 }
 
 func (i ImplServer) RemovePlayer(ctx context.Context, request *RemovePlayerRequest) (reply *PlayerLeaveReply, err error) {
-	//TODO implement me
-	panic("implement me")
+	p, err := i.getPlayer(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if p.RoomID == "" {
+		return nil, errs.ErrPlayerNotInRoom
+	}
+	r, ok := i.rooms[p.RoomID]
+	if !ok {
+		return nil, errs.ErrRoomNotFound
+	}
+	if p.Seat != r.OwnerSeat {
+		return nil, errs.ErrPlayerNotOwner
+	}
+	p2Remove, err := r.GetPlayerBySeat(request.Seat)
+	if err != nil {
+		return nil, err
+	}
+	if err := r.Leave(p2Remove); err != nil {
+		return nil, err
+	}
+	return &PlayerLeaveReply{
+		Seat:       p2Remove.Seat,
+		OwnerSeat:  r.OwnerSeat,
+		PlayerName: p2Remove.Name,
+	}, nil
 }
 
 func (i ImplServer) ListRobots(ctx context.Context) (reply *ListRobotsReply, err error) {
@@ -192,6 +230,15 @@ func (i ImplServer) ListRobots(ctx context.Context) (reply *ListRobotsReply, err
 }
 
 func (i ImplServer) ListPlayerIDs(ctx context.Context) (reply *ListPlayerIDsReply, err error) {
-	//TODO implement me
-	panic("implement me")
+	r, err := i.getRoom(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ids := make([]string, 0)
+	for _, p := range r.Players {
+		ids = append(ids, p.ID)
+	}
+	return &ListPlayerIDsReply{
+		PlayerIDs: ids,
+	}, nil
 }

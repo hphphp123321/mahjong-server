@@ -11,19 +11,22 @@ type Room struct {
 	Name    string
 	Players map[int]*player.Player
 
+	OwnerSeat int
+
 	mu sync.RWMutex
 }
 
-func NewRoom(p *player.Player, name string, id string) *Room {
-	p.IsOwner = true
+func NewRoom(p *player.Player, name string, id string) (*Room, error) {
 	r := &Room{
-		ID:      id,
-		Name:    name,
-		Players: map[int]*player.Player{1: p},
+		ID:        id,
+		Name:      name,
+		Players:   map[int]*player.Player{1: p},
+		OwnerSeat: 1,
 	}
-	seat := r.getIdleSeat()
-	p.Seat = seat
-	return r
+	if err := p.JoinRoom(r.ID, 1); err != nil {
+		return nil, err
+	}
+	return r, nil
 }
 
 func (r *Room) Leave(p *player.Player) error {
@@ -31,7 +34,7 @@ func (r *Room) Leave(p *player.Player) error {
 	defer r.mu.Unlock()
 	for i, player2 := range r.Players {
 		if player2.ID == p.ID {
-			if p.IsOwner {
+			if p.Seat == r.OwnerSeat {
 				r.changeOwner()
 			}
 			if err := p.LeaveRoom(); err != nil {
@@ -48,7 +51,7 @@ func (r *Room) Join(p *player.Player) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if len(r.Players) == 4 {
-		return errs.ErrRoomIsFull
+		return errs.ErrRoomFull
 	}
 	seat := r.getIdleSeat()
 	if err := p.JoinRoom(r.ID, seat); err != nil {
@@ -123,8 +126,8 @@ func (r *Room) changeOwner() {
 		return
 	}
 	for _, p := range r.Players {
-		if p.ID != "" && p.IsOwner == false {
-			p.IsOwner = true
+		if p.ID != "" && p.Seat != r.OwnerSeat {
+			r.OwnerSeat = p.Seat
 			return
 		}
 	}

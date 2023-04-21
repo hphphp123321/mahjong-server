@@ -35,7 +35,6 @@ func MapToPlayerInfo(playerInfo *player.Info) *pb.PlayerInfo {
 	return &pb.PlayerInfo{
 		PlayerName: playerInfo.Name,
 		PlayerSeat: int32(playerInfo.Seat),
-		IsOwner:    playerInfo.IsOwner,
 	}
 }
 
@@ -43,17 +42,19 @@ func ToPbJoinRoomReply(reply *server.JoinRoomReply) *pb.JoinRoomReply {
 	return &pb.JoinRoomReply{
 		Message: JoinRoomMsg(reply.RoomInfo.Name),
 		Room: &pb.RoomInfo{
-			RoomName: reply.RoomInfo.Name,
-			Players:  common.MapSlice(reply.RoomInfo.PlayerInfos, MapToPlayerInfo),
+			RoomName:  reply.RoomInfo.Name,
+			OwnerSeat: int32(reply.RoomInfo.OwnerSeat),
+			Players:   common.MapSlice(reply.RoomInfo.PlayerInfos, MapToPlayerInfo),
 		},
 	}
 }
 
 func MapToRoomInfo(roomInfo *room.Info) *pb.RoomInfo {
 	return &pb.RoomInfo{
-		RoomID:   roomInfo.ID,
-		RoomName: roomInfo.Name,
-		Players:  common.MapSlice(roomInfo.PlayerInfos, MapToPlayerInfo),
+		RoomID:    roomInfo.ID,
+		RoomName:  roomInfo.Name,
+		OwnerSeat: int32(roomInfo.OwnerSeat),
+		Players:   common.MapSlice(roomInfo.PlayerInfos, MapToPlayerInfo),
 	}
 }
 

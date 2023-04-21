@@ -49,13 +49,13 @@ message ReconnectInfo {
 message RoomInfo{
   string roomID = 1;
   string roomName = 2;
-  repeated PlayerInfo players = 3;
+  int32  ownerSeat = 3;
+  repeated PlayerInfo players = 4;
 }
 
 message PlayerInfo{
   string playerName = 1;
   int32 playerSeat = 2;
-  bool IsOwner = 3;
 }
 
 message CreateRoomRequest {
