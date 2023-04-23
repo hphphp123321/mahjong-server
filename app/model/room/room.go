@@ -121,6 +121,18 @@ func (r *Room) ListPlayerIDs() []string {
 	return playerIDs
 }
 
+func (r *Room) CheckAllReady() bool {
+	if len(r.Players) < 4 {
+		return false
+	}
+	for _, p := range r.Players {
+		if !p.Ready {
+			return false
+		}
+	}
+	return true
+}
+
 func (r *Room) getPlayersInfo() []*player.Info {
 	var playerInfos []*player.Info
 	for _, p := range r.Players {

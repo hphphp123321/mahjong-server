@@ -36,7 +36,6 @@ func BoardCastReadyReply(ctx context.Context, server *MahjongServer, reply *pb.R
 }
 
 func StartReadyStream(ctx context.Context, stream pb.Mahjong_ReadyServer, server *MahjongServer) (done chan error, replyChan chan *pb.ReadyReply) {
-	// TODO
 	done = make(chan error)
 	replyChan = make(chan *pb.ReadyReply)
 	go func() {

@@ -9,7 +9,7 @@ type Player struct {
 
 	ID string
 
-	isReady bool
+	Ready bool
 }
 
 func NewPlayer(id string, name string) *Player {
@@ -21,8 +21,9 @@ func NewPlayer(id string, name string) *Player {
 
 func NewRobot(robotType string) *Player {
 	return &Player{
-		ID:   "",
-		Name: robotType,
+		ID:    "",
+		Name:  robotType,
+		Ready: true,
 	}
 }
 
@@ -30,28 +31,24 @@ func (p *Player) GetInfo() *Info {
 	return &Info{
 		Name:  p.Name,
 		Seat:  p.Seat,
-		Ready: p.isReady,
+		Ready: p.Ready,
 	}
 }
 
 func (p *Player) GetReady() error {
-	if p.isReady {
+	if p.Ready {
 		return errs.ErrPlayerReady
 	}
-	p.isReady = true
+	p.Ready = true
 	return nil
 }
 
 func (p *Player) CancelReady() error {
-	if !p.isReady {
+	if !p.Ready {
 		return errs.ErrPlayerNotReady
 	}
-	p.isReady = false
+	p.Ready = false
 	return nil
-}
-
-func (p *Player) IsReady() bool {
-	return p.isReady
 }
 
 func (p *Player) JoinRoom(roomID string, seat int) error {
