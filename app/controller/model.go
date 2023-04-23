@@ -35,6 +35,7 @@ func MapToPlayerInfo(playerInfo *player.Info) *pb.PlayerInfo {
 	return &pb.PlayerInfo{
 		PlayerName: playerInfo.Name,
 		PlayerSeat: int32(playerInfo.Seat),
+		IsReady:    playerInfo.Ready,
 	}
 }
 
@@ -66,5 +67,11 @@ func ToPbListRoomsReply(reply *server.ListRoomsReply) *pb.ListRoomsReply {
 	return &pb.ListRoomsReply{
 		Message: ListRoomsMsg(roomNames),
 		Rooms:   common.MapSlice(reply.RoomInfos, MapToRoomInfo),
+	}
+}
+
+func ToPbListRobotsReply(reply *server.ListRobotsReply) *pb.ListRobotsReply {
+	return &pb.ListRobotsReply{
+		RobotTypes: reply.RobotTypes,
 	}
 }

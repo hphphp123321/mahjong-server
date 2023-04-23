@@ -4,6 +4,7 @@ import (
 	"context"
 	pb "github.com/hphphp123321/mahjong-server/app/api/v1"
 	"github.com/hphphp123321/mahjong-server/app/errs"
+	"github.com/hphphp123321/mahjong-server/app/global"
 	"io"
 )
 
@@ -27,7 +28,7 @@ func BoardCastReadyReply(ctx context.Context, server *MahjongServer, reply *pb.R
 			return errs.ErrClientNotFound
 		}
 		if err = c.readyStream.Send(reply); err != nil {
-			// TODO LOG
+			global.Log.Warnf("send ready reply to %s failed: %v\n", pid, err)
 			continue
 		}
 	}
@@ -67,9 +68,9 @@ func StartReadyStream(ctx context.Context, stream pb.Mahjong_ReadyServer, server
 			case *pb.ReadyRequest_AddRobot:
 				reply, err := handleAddRobot(ctx, server, in)
 				sendChan(replyChan, done, reply, err)
-			case *pb.ReadyRequest_ListRobots:
-				reply, err := handleListRobots(ctx, server, in)
-				sendChan(replyChan, done, reply, err)
+			//case *pb.ReadyRequest_ListRobots:
+			//	reply, err := handleListRobots(ctx, server, in)
+			//	sendChan(replyChan, done, reply, err)
 			case *pb.ReadyRequest_Chat:
 				reply, err := handleChat(ctx, server, in)
 				sendChan(replyChan, done, reply, err)
@@ -129,13 +130,13 @@ func handleAddRobot(ctx context.Context, server *MahjongServer, in *pb.ReadyRequ
 	return ToPbAddRobotReply(r), nil
 }
 
-func handleListRobots(ctx context.Context, server *MahjongServer, in *pb.ReadyRequest) (reply *pb.ReadyReply, err error) {
-	r, err := server.s.ListRobots(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return ToPbListRobotsReply(r), nil
-}
+//func handleListRobots(ctx context.Context, server *MahjongServer, in *pb.ReadyRequest) (reply *pb.ReadyReply, err error) {
+//	r, err := server.s.ListRobots(ctx)
+//	if err != nil {
+//		return nil, err
+//	}
+//	return ToPbListRobotsReply(r), nil
+//}
 
 func handleChat(ctx context.Context, server *MahjongServer, in *pb.ReadyRequest) (reply *pb.ReadyReply, err error) {
 	name, err := server.s.GetName(ctx)

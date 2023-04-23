@@ -92,16 +92,16 @@ func ToPbAddRobotReply(r *server.AddRobotReply) *pb.ReadyReply {
 	}
 }
 
-func ToPbListRobotsReply(r *server.ListRobotsReply) *pb.ReadyReply {
-	return &pb.ReadyReply{
-		Message: ListRobotMsg(r.RobotTypes),
-		Reply: &pb.ReadyReply_ListRobots{
-			ListRobots: &pb.ListRobotsReply{
-				RobotTypes: r.RobotTypes,
-			},
-		},
-	}
-}
+//func ToPbListRobotsReply(r *server.ListRobotsReply) *pb.ReadyReply {
+//	return &pb.ReadyReply{
+//		Message: ListRobotMsg(r.RobotTypes),
+//		Reply: &pb.ReadyReply_ListRobots{
+//			ListRobots: &pb.ListRobotsReply{
+//				RobotTypes: r.RobotTypes,
+//			},
+//		},
+//	}
+//}
 
 func ToPbChatReply(in *pb.ReadyRequest, playerName string) *pb.ReadyReply {
 	return &pb.ReadyReply{

@@ -19,10 +19,18 @@ func NewPlayer(id string, name string) *Player {
 	}
 }
 
+func NewRobot(robotType string) *Player {
+	return &Player{
+		ID:   "",
+		Name: robotType,
+	}
+}
+
 func (p *Player) GetInfo() *Info {
 	return &Info{
-		Name: p.Name,
-		Seat: p.Seat,
+		Name:  p.Name,
+		Seat:  p.Seat,
+		Ready: p.isReady,
 	}
 }
 

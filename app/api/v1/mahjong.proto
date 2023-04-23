@@ -17,6 +17,8 @@ service Mahjong {
 
   rpc ListRooms (ListRoomsRequest) returns (ListRoomsReply) {}
 
+  rpc ListRobots (Empty) returns (ListRobotsReply) {}
+
   rpc Ready (stream ReadyRequest) returns (stream ReadyReply) {}
 
   rpc Game (stream GameRequest) returns (stream GameReply) {}
@@ -56,6 +58,7 @@ message RoomInfo{
 message PlayerInfo{
   string playerName = 1;
   int32 playerSeat = 2;
+  bool isReady = 3;
 }
 
 message CreateRoomRequest {
@@ -97,7 +100,6 @@ message ReadyRequest {
     Empty leaveRoom = 6;
     Empty startGame = 7;
     ChatRequest chat = 8;
-    Empty listRobots = 9;
   }
 }
 
@@ -112,7 +114,6 @@ message ReadyReply {
     PlayerLeaveReply playerLeave = 7;
     Empty startGame = 8;
     ChatReply chat = 9;
-    ListRobotsReply listRobots = 10;
   }
 }
 

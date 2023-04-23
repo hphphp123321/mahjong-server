@@ -61,6 +61,23 @@ func (r *Room) Join(p *player.Player) error {
 	return nil
 }
 
+func (r *Room) AddRobot(robotType string, seat int) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if len(r.Players) == 4 {
+		return errs.ErrRoomFull
+	}
+	if _, ok := r.Players[seat]; ok {
+		return errs.ErrPlayerSeatOccupied
+	}
+	p := player.NewRobot(robotType)
+	if err := p.JoinRoom(r.ID, seat); err != nil {
+		return err
+	}
+	r.Players[seat] = p
+	return nil
+}
+
 func (r *Room) IsFull() bool {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

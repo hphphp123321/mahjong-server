@@ -15,6 +15,13 @@ type ImplServer struct {
 	rooms   map[string]*room.Room
 }
 
+func NewImplServer() *ImplServer {
+	return &ImplServer{
+		players: map[string]*player.Player{},
+		rooms:   map[string]*room.Room{},
+	}
+}
+
 func (i ImplServer) GetID(ctx context.Context) (string, error) {
 	headers, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
@@ -181,7 +188,7 @@ func (i ImplServer) LeaveRoom(ctx context.Context) (reply *PlayerLeaveReply, err
 		return nil, err
 	}
 	if r.IsEmpty() {
-		// TODO log DEBUG
+		global.Log.Infof("room id: %s is empty, delete\n", r.ID)
 		delete(i.rooms, p.RoomID)
 	}
 	return &PlayerLeaveReply{
@@ -191,8 +198,27 @@ func (i ImplServer) LeaveRoom(ctx context.Context) (reply *PlayerLeaveReply, err
 }
 
 func (i ImplServer) AddRobot(ctx context.Context, request *AddRobotRequest) (reply *AddRobotReply, err error) {
-	//TODO implement me
-	panic("implement me")
+	p, err := i.getPlayer(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if p.RoomID == "" {
+		return nil, errs.ErrPlayerNotInRoom
+	}
+	r, ok := i.rooms[p.RoomID]
+	if !ok {
+		return nil, errs.ErrRoomNotFound
+	}
+	if p.Seat != r.OwnerSeat {
+		return nil, errs.ErrPlayerNotOwner
+	}
+	if err := r.AddRobot(request.RobotType, request.RobotSeat); err != nil {
+		return nil, err
+	}
+	return &AddRobotReply{
+		RobotSeat: request.RobotSeat,
+		RobotType: request.RobotType,
+	}, nil
 }
 
 func (i ImplServer) RemovePlayer(ctx context.Context, request *RemovePlayerRequest) (reply *PlayerLeaveReply, err error) {
@@ -225,8 +251,13 @@ func (i ImplServer) RemovePlayer(ctx context.Context, request *RemovePlayerReque
 }
 
 func (i ImplServer) ListRobots(ctx context.Context) (reply *ListRobotsReply, err error) {
-	//TODO implement me
-	panic("implement me")
+	_, err = i.getRoom(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &ListRobotsReply{
+		RobotTypes: global.RobotRegistry.GetRobotTypes(),
+	}, nil
 }
 
 func (i ImplServer) ListPlayerIDs(ctx context.Context) (reply *ListPlayerIDsReply, err error) {

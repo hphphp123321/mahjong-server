@@ -16,4 +16,5 @@ var (
 	ErrPlayerNotOwner      = errors.New("player is not owner")
 	ErrPlayerReady         = errors.New("player is ready")
 	ErrPlayerNotReady      = errors.New("player is not ready")
+	ErrPlayerSeatOccupied  = errors.New("player seat occupied")
 )

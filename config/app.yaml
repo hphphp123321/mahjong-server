@@ -1,0 +1,21 @@
+app:
+  name: mahjong-server
+  mode: dev # mode:[dev, prod, test]
+
+
+server:
+  ip: localhost
+  port: 16548
+  minTime: 1  # If a client pings more than once every MinTime seconds, terminate the connection
+  maxConnectionIdle: 15 # If a client is idle for Idle seconds, send a GOAWAY
+  maxConnectionAgeGrace: 5 # Allow Grace seconds for pending RPCs to complete before forcibly closing connections
+  timeTick: 10 # Ping the client if it is idle for timeTick seconds to ensure the connection is still active
+  timeout: 5 # Wait 1 second for the ping ack before assuming the connection is dead
+
+
+log-config:
+  level: info # 日志等级 [DEBUG, INFO, WARN, ERROR]
+  filename: ./log/1.log # 文件名
+  maxSize: 4 # 单日志文件最大尺寸 MB
+  maxAge: 30 # 最多保存天数 Day
+  maxBackups: 10 # 日志文件保存数量

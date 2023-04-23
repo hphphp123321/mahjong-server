@@ -26,3 +26,7 @@ func (c *Client) Login() {
 	c.LastTime = time.Now()
 	c.Online = true
 }
+
+func (c *Client) Logout() {
+	c.Online = false
+}

@@ -1,6 +1,7 @@
 package player
 
 type Info struct {
-	Name string
-	Seat int
+	Name  string
+	Seat  int
+	Ready bool
 }
