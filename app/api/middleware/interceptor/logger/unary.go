@@ -7,17 +7,20 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
+	"strings"
 )
 
 func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		_, ok := metadata.FromIncomingContext(ctx)
 		if !ok {
-			global.Log.Debugf("context has no metadata\n")
+			global.Log.Debugf("context has no metadata")
 		}
 		ip, err := getClientIP(ctx)
 		m, err := handler(ctx, req)
-		global.Log.Infof("RPC: %s, client IP: %s, err: %v\n", info.FullMethod, ip, err)
+		if !strings.Contains(info.FullMethod, "Ping") {
+			global.Log.Infof("RPC: %s, client IP: %s, reply: %v, err: %v", info.FullMethod, ip, m, err)
+		}
 		return m, err
 	}
 }

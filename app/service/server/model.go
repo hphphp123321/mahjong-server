@@ -17,7 +17,7 @@ type CreateRoomRequest struct {
 }
 
 type CreateRoomReply struct {
-	RoomID string
+	RoomInfo *room.Info
 }
 
 type JoinRoomRequest struct {

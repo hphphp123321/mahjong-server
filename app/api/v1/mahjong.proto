@@ -92,7 +92,7 @@ message ListRoomsReply {
 
 message ReadyRequest {
   oneof request {
-    Empty ping = 1;
+    Empty refreshRoom = 1;
     Empty getReady = 2;
     Empty cancelReady = 3;
     AddRobotRequest addRobot = 4;
@@ -106,7 +106,7 @@ message ReadyRequest {
 message ReadyReply {
   string message  = 1;
   oneof reply {
-    Empty pong = 2;
+    RoomInfo refreshRoomReply = 2;
     PlayerJoinReply playerJoin = 3;
     GetReadyReply getReady = 4;
     CancelReadyReply cancelReady = 5;

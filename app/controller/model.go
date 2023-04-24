@@ -24,10 +24,8 @@ func ToPbLogoutReply() *pb.LogoutReply {
 
 func ToPbCreateRoomReply(reply *server.CreateRoomReply) *pb.CreateRoomReply {
 	return &pb.CreateRoomReply{
-		Message: CreateMsg(reply.RoomID),
-		Room: &pb.RoomInfo{
-			RoomID: reply.RoomID,
-		},
+		Message: CreateMsg(reply.RoomInfo.ID),
+		Room:    MapToRoomInfo(reply.RoomInfo),
 	}
 }
 
@@ -42,11 +40,7 @@ func MapToPlayerInfo(playerInfo *player.Info) *pb.PlayerInfo {
 func ToPbJoinRoomReply(reply *server.JoinRoomReply) *pb.JoinRoomReply {
 	return &pb.JoinRoomReply{
 		Message: JoinRoomMsg(reply.RoomInfo.Name),
-		Room: &pb.RoomInfo{
-			RoomName:  reply.RoomInfo.Name,
-			OwnerSeat: int32(reply.RoomInfo.OwnerSeat),
-			Players:   common.MapSlice(reply.RoomInfo.PlayerInfos, MapToPlayerInfo),
-		},
+		Room:    MapToRoomInfo(reply.RoomInfo),
 	}
 }
 

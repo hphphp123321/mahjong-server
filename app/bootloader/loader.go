@@ -40,9 +40,9 @@ func Load(ctx context.Context, list LoaderList) {
 		}
 
 		if _, ok := env[KeyDisableLog]; !ok {
-			log.Printf("[Bootloader] 预计加载模块：\n")
+			log.Printf("[Bootloader] 预计加载模块：")
 			for i, loader := range list {
-				log.Printf("[Bootloader] Module(%v/%v): %v\n",
+				log.Printf("[Bootloader] Module(%v/%v): %v",
 					i+1,
 					len(list),
 					loader.Name())
@@ -50,18 +50,18 @@ func Load(ctx context.Context, list LoaderList) {
 		}
 
 		if _, ok := env[KeyDisableLog]; !ok {
-			log.Printf("[Bootloader] start (total: %v)...\n", len(list))
+			log.Printf("[Bootloader] start (total: %v)...", len(list))
 		}
 
 		for i, loader := range list {
-			//log.Printf("[Bootloaders] start to load: %v\n", loader.Name())
+			//log.Printf("[Bootloaders] start to load: %v", loader.Name())
 			t := time.Now()
 			if err := loader.Load(ctx, env); err != nil {
 				panicInfo := fmt.Sprintf("[%s]%s", loader.Name(), err.Error())
 				panic(panicInfo)
 			}
 			if _, ok := env[KeyDisableLog]; !ok {
-				log.Printf("[Bootloader] successfully loaded(%v/%v, time: %vms): %v\n",
+				log.Printf("[Bootloader] successfully loaded(%v/%v, time: %vms): %v",
 					i+1,
 					len(list),
 					time.Since(t).Milliseconds(),
@@ -72,7 +72,7 @@ func Load(ctx context.Context, list LoaderList) {
 
 		if _, ok := env[KeyDisableLog]; !ok {
 
-			log.Printf("[Bootloader] load finished (total: %v), time: %vms\n",
+			log.Printf("[Bootloader] load finished (total: %v), time: %vms",
 				len(list),
 				time.Since(t).Milliseconds())
 		}

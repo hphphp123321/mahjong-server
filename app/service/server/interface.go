@@ -2,11 +2,13 @@ package server
 
 import (
 	"context"
+	"github.com/hphphp123321/mahjong-server/app/model/room"
 )
 
 type Server interface {
 	GetID(ctx context.Context) (string, error)
 	GetName(ctx context.Context) (string, error)
+	GetRoomInfo(ctx context.Context) (*room.Info, error)
 
 	Login(ctx context.Context, request *LoginRequest) (reply *LoginReply, err error)
 	Logout(ctx context.Context) error

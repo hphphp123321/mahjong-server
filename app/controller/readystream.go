@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	pb "github.com/hphphp123321/mahjong-server/app/api/v1"
 	"github.com/hphphp123321/mahjong-server/app/errs"
 	"github.com/hphphp123321/mahjong-server/app/global"
@@ -27,12 +28,30 @@ func BoardCastReadyReply(ctx context.Context, server *MahjongServer, reply *pb.R
 		if !ok {
 			return errs.ErrClientNotFound
 		}
+		if c.readyStream == nil {
+			continue
+		}
 		if err = c.readyStream.Send(reply); err != nil {
-			global.Log.Warnf("send ready reply to %s failed: %v\n", pid, err)
+			global.Log.Warnf("send ready reply to %s failed: %v", pid, err)
 			continue
 		}
 	}
 	return err
+}
+
+func SendBack(ctx context.Context, server *MahjongServer, reply *pb.ReadyReply) error {
+	cid, err := server.s.GetID(ctx)
+	if err != nil {
+		return err
+	}
+	c, ok := server.clients[cid]
+	if !ok {
+		return errs.ErrClientNotFound
+	}
+	if c.readyStream == nil {
+		return errs.ErrStreamNotFound
+	}
+	return c.readyStream.Send(reply)
 }
 
 func StartReadyStream(ctx context.Context, stream pb.Mahjong_ReadyServer, server *MahjongServer) (done chan error, replyChan chan *pb.ReadyReply) {
@@ -42,15 +61,17 @@ func StartReadyStream(ctx context.Context, stream pb.Mahjong_ReadyServer, server
 		for {
 			in, err := stream.Recv()
 			if err == io.EOF {
+				global.Log.Infoln("ready stream closed: ", err)
 				done <- nil
 				return
 			} else if err != nil {
+				global.Log.Warnln(err)
 				done <- err
 				return
 			}
 			switch in.GetRequest().(type) {
-			case *pb.ReadyRequest_Ping:
-				reply, err := handlePing(ctx, server, in)
+			case *pb.ReadyRequest_RefreshRoom:
+				reply, err := handleRefreshRoom(ctx, server, in)
 				sendChan(replyChan, done, reply, err)
 			case *pb.ReadyRequest_GetReady:
 				reply, err := handleGetReady(ctx, server, in)
@@ -82,17 +103,25 @@ func StartReadyStream(ctx context.Context, stream pb.Mahjong_ReadyServer, server
 	return done, replyChan
 }
 
-func handlePing(ctx context.Context, server *MahjongServer, in *pb.ReadyRequest) (reply *pb.ReadyReply, err error) {
-	return &pb.ReadyReply{
+func handleRefreshRoom(ctx context.Context, server *MahjongServer, in *pb.ReadyRequest) (reply *pb.ReadyReply, err error) {
+	info, err := server.s.GetRoomInfo(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("handle refresh room: %s", err)
+	}
+	reply = &pb.ReadyReply{
 		Message: "",
-		Reply:   &pb.ReadyReply_Pong{Pong: &pb.Empty{}},
-	}, nil
+		Reply:   &pb.ReadyReply_RefreshRoomReply{RefreshRoomReply: MapToRoomInfo(info)},
+	}
+	if err := SendBack(ctx, server, reply); err != nil {
+		return nil, fmt.Errorf("handle refresh room: %s", err)
+	}
+	return nil, nil
 }
 
 func handleGetReady(ctx context.Context, server *MahjongServer, in *pb.ReadyRequest) (reply *pb.ReadyReply, err error) {
 	r, err := server.s.GetReady(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("handle get ready: %s", err)
 	}
 	return ToPbGetReadyReply(r), nil
 }
@@ -100,23 +129,50 @@ func handleGetReady(ctx context.Context, server *MahjongServer, in *pb.ReadyRequ
 func handleCancelReady(ctx context.Context, server *MahjongServer, in *pb.ReadyRequest) (reply *pb.ReadyReply, err error) {
 	r, err := server.s.CancelReady(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("handle cancel ready: %s", err)
 	}
 	return ToPbCancelReadyReply(r), nil
 }
 
 func handleLeaveRoom(ctx context.Context, server *MahjongServer, in *pb.ReadyRequest) (reply *pb.ReadyReply, err error) {
+	re, err := server.s.ListPlayerIDs(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("handle leave room: %s", err)
+	}
+	var pids []string
+	id, _ := server.s.GetID(ctx)
+	for _, pid := range re.PlayerIDs {
+		if pid == id {
+			server.clients[pid].readyStream = nil
+			continue
+		}
+		pids = append(pids, pid)
+	}
 	r, err := server.s.LeaveRoom(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return ToPbLeaveRoomReply(r), nil
+	reply = ToPbLeaveRoomReply(r)
+	for _, pid := range pids {
+		c, ok := server.clients[pid]
+		if !ok {
+			return nil, errs.ErrClientNotFound
+		}
+		if c.readyStream == nil {
+			continue
+		}
+		if err = c.readyStream.Send(reply); err != nil {
+			global.Log.Warnf("send leave room reply to %s failed: %v", pid, err)
+			continue
+		}
+	}
+	return nil, nil
 }
 
 func handleRemovePlayer(ctx context.Context, server *MahjongServer, in *pb.ReadyRequest) (reply *pb.ReadyReply, err error) {
 	r, err := server.s.RemovePlayer(ctx, ToServerRemovePlayerRequest(in))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("handle remove player: %s", err)
 	}
 	return ToPbRemovePlayerReply(r), nil
 }
@@ -124,7 +180,7 @@ func handleRemovePlayer(ctx context.Context, server *MahjongServer, in *pb.Ready
 func handleAddRobot(ctx context.Context, server *MahjongServer, in *pb.ReadyRequest) (reply *pb.ReadyReply, err error) {
 	r, err := server.s.AddRobot(ctx, ToServerAddRobotRequest(in))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("handle add robot: %s", err)
 	}
 	return ToPbAddRobotReply(r), nil
 }
@@ -140,7 +196,7 @@ func handleAddRobot(ctx context.Context, server *MahjongServer, in *pb.ReadyRequ
 func handleChat(ctx context.Context, server *MahjongServer, in *pb.ReadyRequest) (reply *pb.ReadyReply, err error) {
 	name, err := server.s.GetName(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("handle chat: %s", err)
 	}
 	return ToPbChatReply(in, name), nil
 }
@@ -153,7 +209,7 @@ func handleStartGame(ctx context.Context, server *MahjongServer, in *pb.ReadyReq
 func sendChan(replyChan chan<- *pb.ReadyReply, done chan<- error, reply *pb.ReadyReply, err error) {
 	if err != nil {
 		done <- err
-	} else {
+	} else if reply != nil {
 		replyChan <- reply
 	}
 }

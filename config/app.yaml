@@ -6,11 +6,11 @@ app:
 server:
   ip: localhost
   port: 16548
-  minTime: 1  # If a client pings more than once every MinTime seconds, terminate the connection
-  maxConnectionIdle: 15 # If a client is idle for Idle seconds, send a GOAWAY
-  maxConnectionAgeGrace: 5 # Allow Grace seconds for pending RPCs to complete before forcibly closing connections
+  minTime: 30  # If a client pings more than once every MinTime seconds, terminate the connection
+  maxConnectionIdle: 600 # If a client is idle for Idle seconds, send a GOAWAY
+  maxConnectionAgeGrace: 15 # Allow Grace seconds for pending RPCs to complete before forcibly closing connections
   timeTick: 10 # Ping the client if it is idle for timeTick seconds to ensure the connection is still active
-  timeout: 5 # Wait 1 second for the ping ack before assuming the connection is dead
+  timeout: 600 # Wait 1 second for the ping ack before assuming the connection is dead
 
 
 log-config:

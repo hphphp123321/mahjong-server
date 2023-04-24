@@ -49,7 +49,7 @@ func (m MahjongServer) Logout(ctx context.Context, empty *pb.Empty) (*pb.LogoutR
 	}
 	c, ok := m.clients[id]
 	if !ok {
-		global.Log.Warnf("client %s not found\n", id)
+		global.Log.Warnf("client %s not found", id)
 	} else {
 		c.Logout()
 	}
@@ -97,23 +97,27 @@ func (m MahjongServer) ListRobots(ctx context.Context, empty *pb.Empty) (*pb.Lis
 	return ToPbListRobotsReply(reply), nil
 }
 
-func (m MahjongServer) Ready(stream pb.Mahjong_ReadyServer) error {
+func (m MahjongServer) Ready(stream pb.Mahjong_ReadyServer) (err error) {
 	ctx := stream.Context()
 	if err := AddReadyStream(ctx, stream, &m); err != nil {
 		return err
 	}
 	done, replyChan := StartReadyStream(ctx, stream, &m)
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case err := <-done:
-		return err
-	case reply := <-replyChan:
-		if err := BoardCastReadyReply(ctx, &m, reply); err != nil {
-			global.Log.Warnf("board cast error: %v\n", err)
+	for {
+		select {
+		case <-ctx.Done():
+			goto TagBreak
+		case err = <-done:
+			global.Log.Warnln("ready stream done: ", err)
+			goto TagBreak
+		case reply := <-replyChan:
+			if err = BoardCastReadyReply(ctx, &m, reply); err != nil {
+				global.Log.Warnf("board cast error: %v", err)
+			}
 		}
 	}
-	return nil
+TagBreak:
+	return err
 }
 
 func (m MahjongServer) Game(server pb.Mahjong_GameServer) error {

@@ -44,6 +44,20 @@ func (i ImplServer) GetName(ctx context.Context) (string, error) {
 	}
 }
 
+func (i ImplServer) GetRoomInfo(ctx context.Context) (*room.Info, error) {
+	if id, err := i.GetID(ctx); err != nil {
+		return nil, err
+	} else if p, ok := i.players[id]; !ok {
+		return nil, errs.ErrPlayerNotFound
+	} else if p.RoomID == "" {
+		return nil, errs.ErrPlayerNotInRoom
+	} else if r, ok := i.rooms[p.RoomID]; !ok {
+		return nil, errs.ErrRoomNotFound
+	} else {
+		return r.GetInfo(), nil
+	}
+}
+
 func (i ImplServer) getPlayer(ctx context.Context) (*player.Player, error) {
 	pid, err := i.GetID(ctx)
 	if err != nil {
@@ -106,7 +120,7 @@ func (i ImplServer) CreateRoom(ctx context.Context, request *CreateRoomRequest) 
 	}
 	i.rooms[rid] = r
 	return &CreateRoomReply{
-		RoomID: rid,
+		RoomInfo: r.GetInfo(),
 	}, nil
 }
 
@@ -174,6 +188,7 @@ func (i ImplServer) CancelReady(ctx context.Context) (reply *CancelReadyReply, e
 
 func (i ImplServer) LeaveRoom(ctx context.Context) (reply *PlayerLeaveReply, err error) {
 	p, err := i.getPlayer(ctx)
+	seat := p.Seat
 	if err != nil {
 		return nil, err
 	}
@@ -188,12 +203,13 @@ func (i ImplServer) LeaveRoom(ctx context.Context) (reply *PlayerLeaveReply, err
 		return nil, err
 	}
 	if r.IsEmpty() {
-		global.Log.Infof("room id: %s is empty, delete\n", r.ID)
+		global.Log.Infof("room id: %s is empty, delete", r.ID)
 		delete(i.rooms, p.RoomID)
 	}
 	return &PlayerLeaveReply{
-		Seat:       p.Seat,
+		Seat:       seat,
 		PlayerName: p.Name,
+		OwnerSeat:  r.OwnerSeat,
 	}, nil
 }
 

@@ -17,4 +17,5 @@ var (
 	ErrPlayerReady         = errors.New("player is ready")
 	ErrPlayerNotReady      = errors.New("player is not ready")
 	ErrPlayerSeatOccupied  = errors.New("player seat occupied")
+	ErrStreamNotFound      = errors.New("stream not found")
 )
