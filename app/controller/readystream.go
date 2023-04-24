@@ -18,6 +18,15 @@ func AddReadyStream(ctx context.Context, stream pb.Mahjong_ReadyServer, server *
 	return nil
 }
 
+func RemoveReadyStream(ctx context.Context, server *MahjongServer) error {
+	cid, err := server.s.GetID(ctx)
+	if err != nil {
+		return err
+	}
+	server.clients[cid].readyStream = nil
+	return nil
+}
+
 func BoardCastReadyReply(ctx context.Context, server *MahjongServer, reply *pb.ReadyReply) error {
 	r, err := server.s.ListPlayerIDs(ctx)
 	if err != nil {
@@ -82,15 +91,16 @@ func StartReadyStream(ctx context.Context, stream pb.Mahjong_ReadyServer, server
 			case *pb.ReadyRequest_LeaveRoom:
 				reply, err := handleLeaveRoom(ctx, server, in)
 				sendChan(replyChan, done, reply, err)
+				if reply == nil && err == nil {
+					done <- nil
+					return
+				}
 			case *pb.ReadyRequest_RemovePlayer:
 				reply, err := handleRemovePlayer(ctx, server, in)
 				sendChan(replyChan, done, reply, err)
 			case *pb.ReadyRequest_AddRobot:
 				reply, err := handleAddRobot(ctx, server, in)
 				sendChan(replyChan, done, reply, err)
-			//case *pb.ReadyRequest_ListRobots:
-			//	reply, err := handleListRobots(ctx, server, in)
-			//	sendChan(replyChan, done, reply, err)
 			case *pb.ReadyRequest_Chat:
 				reply, err := handleChat(ctx, server, in)
 				sendChan(replyChan, done, reply, err)
@@ -142,10 +152,6 @@ func handleLeaveRoom(ctx context.Context, server *MahjongServer, in *pb.ReadyReq
 	var pids []string
 	id, _ := server.s.GetID(ctx)
 	for _, pid := range re.PlayerIDs {
-		if pid == id {
-			server.clients[pid].readyStream = nil
-			continue
-		}
 		pids = append(pids, pid)
 	}
 	r, err := server.s.LeaveRoom(ctx)
@@ -158,12 +164,12 @@ func handleLeaveRoom(ctx context.Context, server *MahjongServer, in *pb.ReadyReq
 		if !ok {
 			return nil, errs.ErrClientNotFound
 		}
-		if c.readyStream == nil {
-			continue
-		}
 		if err = c.readyStream.Send(reply); err != nil {
 			global.Log.Warnf("send leave room reply to %s failed: %v", pid, err)
 			continue
+		}
+		if pid == id {
+			c.readyStream = nil
 		}
 	}
 	return nil, nil

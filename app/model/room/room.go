@@ -105,6 +105,7 @@ func (r *Room) GetInfo() *Info {
 	return &Info{
 		ID:          r.ID,
 		Name:        r.Name,
+		OwnerSeat:   r.OwnerSeat,
 		PlayerInfos: r.getPlayersInfo(),
 	}
 }

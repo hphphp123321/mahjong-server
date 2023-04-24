@@ -195,7 +195,8 @@ func (i ImplServer) LeaveRoom(ctx context.Context) (reply *PlayerLeaveReply, err
 	if p.RoomID == "" {
 		return nil, errs.ErrPlayerNotInRoom
 	}
-	r, ok := i.rooms[p.RoomID]
+	id := p.RoomID
+	r, ok := i.rooms[id]
 	if !ok {
 		return nil, errs.ErrRoomNotFound
 	}
@@ -204,7 +205,7 @@ func (i ImplServer) LeaveRoom(ctx context.Context) (reply *PlayerLeaveReply, err
 	}
 	if r.IsEmpty() {
 		global.Log.Infof("room id: %s is empty, delete", r.ID)
-		delete(i.rooms, p.RoomID)
+		delete(i.rooms, id)
 	}
 	return &PlayerLeaveReply{
 		Seat:       seat,

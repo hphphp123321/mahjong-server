@@ -108,7 +108,9 @@ func (m MahjongServer) Ready(stream pb.Mahjong_ReadyServer) (err error) {
 		case <-ctx.Done():
 			goto TagBreak
 		case err = <-done:
-			global.Log.Warnln("ready stream done: ", err)
+			if err != nil {
+				global.Log.Warnln("ready stream done: ", err)
+			}
 			goto TagBreak
 		case reply := <-replyChan:
 			if err = BoardCastReadyReply(ctx, &m, reply); err != nil {
@@ -117,7 +119,7 @@ func (m MahjongServer) Ready(stream pb.Mahjong_ReadyServer) (err error) {
 		}
 	}
 TagBreak:
-	return err
+	return RemoveReadyStream(ctx, &m)
 }
 
 func (m MahjongServer) Game(server pb.Mahjong_GameServer) error {
