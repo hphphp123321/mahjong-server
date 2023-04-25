@@ -1,8 +1,10 @@
 package room
 
 import (
+	"github.com/hphphp123321/mahjong-go/mahjong"
 	"github.com/hphphp123321/mahjong-server/app/errs"
 	"github.com/hphphp123321/mahjong-server/app/model/player"
+	"math/rand"
 	"sync"
 )
 
@@ -14,6 +16,10 @@ type Room struct {
 	OwnerSeat int
 
 	mu sync.RWMutex
+
+	seatsOrder  []int
+	game        *mahjong.Game
+	gamePlayers map[int]*mahjong.Player
 }
 
 func NewRoom(p *player.Player, name string, id string) (*Room, error) {
@@ -187,4 +193,25 @@ func (r *Room) changeOwner() {
 		}
 	}
 	return
+}
+
+func (r *Room) StartGame(rule *mahjong.Rule, seed int64) ([]int, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if !r.IsFull() {
+		return nil, errs.ErrRoomNotFull
+	}
+	if !r.CheckAllReady() {
+		return nil, errs.ErrRoomNotAllReady
+	}
+	r.game = mahjong.NewMahjongGame(seed, rule)
+	seatsToShuffle := []int{1, 2, 3, 4}
+	rand.Shuffle(4, func(i, j int) {
+		seatsToShuffle[i], seatsToShuffle[j] = seatsToShuffle[j], seatsToShuffle[i]
+	})
+	for seat, _ := range r.Players {
+		r.gamePlayers[seat] = mahjong.NewMahjongPlayer()
+	}
+	r.seatsOrder = seatsToShuffle
+	return seatsToShuffle, nil
 }

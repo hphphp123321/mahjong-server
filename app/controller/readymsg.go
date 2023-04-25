@@ -40,3 +40,7 @@ func ListRobotMsg(names []string) string {
 func ChatMsg(name, msg string) string {
 	return fmt.Sprintf("Player %s: %s", name, msg)
 }
+
+func StartGameMsg() string {
+	return fmt.Sprintf("Start Game!")
+}

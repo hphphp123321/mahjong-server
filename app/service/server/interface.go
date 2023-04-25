@@ -25,9 +25,9 @@ type Server interface {
 	AddRobot(ctx context.Context, request *AddRobotRequest) (reply *AddRobotReply, err error)
 	RemovePlayer(ctx context.Context, request *RemovePlayerRequest) (reply *PlayerLeaveReply, err error)
 	ListRobots(ctx context.Context) (reply *ListRobotsReply, err error)
+	StartGame(ctx context.Context, request *StartGameRequest) (reply *StartGameReply, err error)
 }
 
 type GameServer interface {
-	StartGame(ctx context.Context, request *StartGameRequest) (reply *StartGameReply, err error)
 	Step(ctx context.Context, actions map[int]*mahjong.Call) (events map[string]mahjong.Events, validActions map[string]*mahjong.Calls)
 }

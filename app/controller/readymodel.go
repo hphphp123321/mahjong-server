@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"github.com/hphphp123321/go-common"
 	pb "github.com/hphphp123321/mahjong-server/app/api/v1"
 	"github.com/hphphp123321/mahjong-server/app/service/server"
 )
@@ -92,17 +93,6 @@ func ToPbAddRobotReply(r *server.AddRobotReply) *pb.ReadyReply {
 	}
 }
 
-//func ToPbListRobotsReply(r *server.ListRobotsReply) *pb.ReadyReply {
-//	return &pb.ReadyReply{
-//		Message: ListRobotMsg(r.RobotTypes),
-//		Reply: &pb.ReadyReply_ListRobots{
-//			ListRobots: &pb.ListRobotsReply{
-//				RobotTypes: r.RobotTypes,
-//			},
-//		},
-//	}
-//}
-
 func ToPbChatReply(in *pb.ReadyRequest, playerName string, seat int) *pb.ReadyReply {
 	return &pb.ReadyReply{
 		Message: ChatMsg(playerName, in.GetChat().Message),
@@ -110,5 +100,23 @@ func ToPbChatReply(in *pb.ReadyRequest, playerName string, seat int) *pb.ReadyRe
 			Message: in.GetChat().Message,
 			Seat:    int32(seat),
 		}},
+	}
+}
+
+func ToServerStartGameRequest(in *pb.ReadyRequest) *server.StartGameRequest {
+	return &server.StartGameRequest{
+		Rule: ToGameRule(in.GetStartGame().GetGameRule()),
+		Seed: in.GetStartGame().GetSeed(),
+	}
+}
+
+func ToPbStartGameReply(in *server.StartGameReply) *pb.ReadyReply {
+	return &pb.ReadyReply{
+		Message: StartGameMsg(),
+		Reply: &pb.ReadyReply_StartGame{
+			StartGame: &pb.StartGameReply{
+				SeatsOrder: common.MapSlice(in.SeatsOrder, func(i int) int32 { return int32(i) }),
+			},
+		},
 	}
 }

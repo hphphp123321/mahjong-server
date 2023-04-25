@@ -79,11 +79,11 @@ type ListPlayerIDsReply struct {
 
 type StartGameRequest struct {
 	Rule *mahjong.Rule
-	Seed int
+	Seed int64
 }
 
 type StartGameReply struct {
-	IDSlice []string
+	SeatsOrder []int
 }
 
 type StepRequest struct {

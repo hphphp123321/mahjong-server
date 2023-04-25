@@ -325,3 +325,27 @@ func (i ImplServer) ListPlayerIDs(ctx context.Context) (reply *ListPlayerIDsRepl
 		PlayerIDs: ids,
 	}, nil
 }
+
+func (i ImplServer) StartGame(ctx context.Context, request *StartGameRequest) (reply *StartGameReply, err error) {
+	p, err := i.getPlayer(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if p.RoomID == "" {
+		return nil, errs.ErrPlayerNotInRoom
+	}
+	r, ok := i.rooms[p.RoomID]
+	if !ok {
+		return nil, errs.ErrRoomNotFound
+	}
+	if p.Seat != r.OwnerSeat {
+		return nil, errs.ErrPlayerNotOwner
+	}
+	seatsOrder, err := r.StartGame(request.Rule, request.Seed)
+	if err != nil {
+		return nil, err
+	}
+	return &StartGameReply{
+		SeatsOrder: seatsOrder,
+	}, nil
+}

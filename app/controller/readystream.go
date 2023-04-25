@@ -220,14 +220,6 @@ func handleAddRobot(ctx context.Context, server *MahjongServer, in *pb.ReadyRequ
 	return ToPbAddRobotReply(r), nil
 }
 
-//func handleListRobots(ctx context.Context, server *MahjongServer, in *pb.ReadyRequest) (reply *pb.ReadyReply, err error) {
-//	r, err := server.s.ListRobots(ctx)
-//	if err != nil {
-//		return nil, err
-//	}
-//	return ToPbListRobotsReply(r), nil
-//}
-
 func handleChat(ctx context.Context, server *MahjongServer, in *pb.ReadyRequest) (reply *pb.ReadyReply, err error) {
 	name, err := server.s.GetName(ctx)
 	if err != nil {
@@ -241,8 +233,11 @@ func handleChat(ctx context.Context, server *MahjongServer, in *pb.ReadyRequest)
 }
 
 func handleStartGame(ctx context.Context, server *MahjongServer, in *pb.ReadyRequest) (reply *pb.ReadyReply, err error) {
-	return nil, nil
-	// TODO
+	r, err := server.s.StartGame(ctx, ToServerStartGameRequest(in))
+	if err != nil {
+		return nil, err
+	}
+	return ToPbStartGameReply(r), nil
 }
 
 func sendChan(replyChan chan<- *pb.ReadyReply, done chan<- error, reply *pb.ReadyReply, err error) {

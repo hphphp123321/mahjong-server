@@ -18,4 +18,6 @@ var (
 	ErrPlayerNotReady      = errors.New("player is not ready")
 	ErrPlayerSeatOccupied  = errors.New("player seat occupied")
 	ErrStreamNotFound      = errors.New("stream not found")
+	ErrRoomNotFull         = errors.New("room is not full")
+	ErrRoomNotAllReady     = errors.New("room is not all ready")
 )
