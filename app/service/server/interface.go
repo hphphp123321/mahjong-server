@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"github.com/hphphp123321/mahjong-go/mahjong"
 	"github.com/hphphp123321/mahjong-server/app/model/room"
 )
 
@@ -9,6 +10,9 @@ type Server interface {
 	GetID(ctx context.Context) (string, error)
 	GetName(ctx context.Context) (string, error)
 	GetRoomInfo(ctx context.Context) (*room.Info, error)
+	GetSeat(ctx context.Context) (int, error)
+	GetIDBySeat(ctx context.Context, seat int) (string, error)
+	ListPlayerIDs(ctx context.Context) (reply *ListPlayerIDsReply, err error) // List all player IDs in the room
 
 	Login(ctx context.Context, request *LoginRequest) (reply *LoginReply, err error)
 	Logout(ctx context.Context) error
@@ -21,6 +25,9 @@ type Server interface {
 	AddRobot(ctx context.Context, request *AddRobotRequest) (reply *AddRobotReply, err error)
 	RemovePlayer(ctx context.Context, request *RemovePlayerRequest) (reply *PlayerLeaveReply, err error)
 	ListRobots(ctx context.Context) (reply *ListRobotsReply, err error)
+}
 
-	ListPlayerIDs(ctx context.Context) (reply *ListPlayerIDsReply, err error) // List all player IDs in the room
+type GameServer interface {
+	StartGame(ctx context.Context, request *StartGameRequest) (reply *StartGameReply, err error)
+	Step(ctx context.Context, actions map[int]*mahjong.Call) (events map[string]mahjong.Events, validActions map[string]*mahjong.Calls)
 }

@@ -232,8 +232,9 @@ message EventGet {
 
 message EventDiscard {
   Wind who = 1;
-  int32 tile = 2;
+  Tile tile = 2;
   bool tsumoGiri = 3;
+  repeated TileClass tenhaiSlice = 4;
 }
 
 message EventCall {
@@ -317,6 +318,7 @@ message ChatRequest {
 
 message ChatReply {
   string message = 1;
+  int32 seat = 2;
 }
 
 

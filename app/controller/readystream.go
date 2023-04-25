@@ -164,6 +164,9 @@ func handleLeaveRoom(ctx context.Context, server *MahjongServer, in *pb.ReadyReq
 		if !ok {
 			return nil, errs.ErrClientNotFound
 		}
+		if c.readyStream == nil {
+			return nil, errs.ErrStreamNotFound
+		}
 		if err = c.readyStream.Send(reply); err != nil {
 			global.Log.Warnf("send leave room reply to %s failed: %v", pid, err)
 			continue
@@ -176,11 +179,37 @@ func handleLeaveRoom(ctx context.Context, server *MahjongServer, in *pb.ReadyReq
 }
 
 func handleRemovePlayer(ctx context.Context, server *MahjongServer, in *pb.ReadyRequest) (reply *pb.ReadyReply, err error) {
+	re, err := server.s.ListPlayerIDs(ctx)
+	reSeat := in.GetRemovePlayer().PlayerSeat
+	reId, err := server.s.GetIDBySeat(ctx, int(reSeat))
+	if err != nil {
+		return nil, fmt.Errorf("handle remove player: %s", err)
+	}
+	var pids []string
+	for _, pid := range re.PlayerIDs {
+		pids = append(pids, pid)
+	}
 	r, err := server.s.RemovePlayer(ctx, ToServerRemovePlayerRequest(in))
 	if err != nil {
 		return nil, fmt.Errorf("handle remove player: %s", err)
 	}
-	return ToPbRemovePlayerReply(r), nil
+	for _, pid := range pids {
+		c, ok := server.clients[pid]
+		if !ok {
+			return nil, errs.ErrClientNotFound
+		}
+		if c.readyStream == nil {
+			return nil, errs.ErrStreamNotFound
+		}
+		if err = c.readyStream.Send(ToPbRemovePlayerReply(r)); err != nil {
+			global.Log.Warnf("send remove player reply to %s failed: %v", pid, err)
+			continue
+		}
+		if pid == reId {
+			c.readyStream = nil
+		}
+	}
+	return nil, nil
 }
 
 func handleAddRobot(ctx context.Context, server *MahjongServer, in *pb.ReadyRequest) (reply *pb.ReadyReply, err error) {
@@ -204,7 +233,11 @@ func handleChat(ctx context.Context, server *MahjongServer, in *pb.ReadyRequest)
 	if err != nil {
 		return nil, fmt.Errorf("handle chat: %s", err)
 	}
-	return ToPbChatReply(in, name), nil
+	seat, err := server.s.GetSeat(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("handle chat: %s", err)
+	}
+	return ToPbChatReply(in, name, seat), nil
 }
 
 func handleStartGame(ctx context.Context, server *MahjongServer, in *pb.ReadyRequest) (reply *pb.ReadyReply, err error) {

@@ -41,6 +41,7 @@ func ToPbJoinRoomReply(reply *server.JoinRoomReply) *pb.JoinRoomReply {
 	return &pb.JoinRoomReply{
 		Message: JoinRoomMsg(reply.RoomInfo.Name),
 		Room:    MapToRoomInfo(reply.RoomInfo),
+		Seat:    int32(reply.Seat),
 	}
 }
 

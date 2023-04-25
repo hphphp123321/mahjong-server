@@ -29,6 +29,23 @@ func NewRoom(p *player.Player, name string, id string) (*Room, error) {
 	return r, nil
 }
 
+func (r *Room) LeaveRoomBySeat(seat int) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	p, ok := r.Players[seat]
+	if !ok {
+		return errs.ErrPlayerNotInRoom
+	}
+	if p.Seat == r.OwnerSeat {
+		r.changeOwner()
+	}
+	if err := p.LeaveRoom(); err != nil {
+		return err
+	}
+	delete(r.Players, seat)
+	return nil
+}
+
 func (r *Room) Leave(p *player.Player) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -87,7 +104,15 @@ func (r *Room) IsFull() bool {
 func (r *Room) IsEmpty() bool {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	return len(r.Players) == 0
+	if len(r.Players) == 0 {
+		return true
+	}
+	for _, p := range r.Players {
+		if p.ID != "" {
+			return false
+		}
+	}
+	return true
 }
 
 func (r *Room) GetPlayerBySeat(seat int) (*player.Player, error) {

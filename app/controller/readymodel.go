@@ -103,11 +103,12 @@ func ToPbAddRobotReply(r *server.AddRobotReply) *pb.ReadyReply {
 //	}
 //}
 
-func ToPbChatReply(in *pb.ReadyRequest, playerName string) *pb.ReadyReply {
+func ToPbChatReply(in *pb.ReadyRequest, playerName string, seat int) *pb.ReadyReply {
 	return &pb.ReadyReply{
 		Message: ChatMsg(playerName, in.GetChat().Message),
 		Reply: &pb.ReadyReply_Chat{Chat: &pb.ChatReply{
 			Message: in.GetChat().Message,
+			Seat:    int32(seat),
 		}},
 	}
 }

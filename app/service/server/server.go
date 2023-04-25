@@ -58,6 +58,36 @@ func (i ImplServer) GetRoomInfo(ctx context.Context) (*room.Info, error) {
 	}
 }
 
+func (i ImplServer) GetSeat(ctx context.Context) (int, error) {
+	if id, err := i.GetID(ctx); err != nil {
+		return 0, err
+	} else if p, ok := i.players[id]; !ok {
+		return 0, errs.ErrPlayerNotFound
+	} else if p.RoomID == "" {
+		return 0, errs.ErrPlayerNotInRoom
+	} else if _, ok := i.rooms[p.RoomID]; !ok {
+		return 0, errs.ErrRoomNotFound
+	} else {
+		return p.Seat, nil
+	}
+}
+
+func (i ImplServer) GetIDBySeat(ctx context.Context, seat int) (string, error) {
+	if id, err := i.GetID(ctx); err != nil {
+		return "", err
+	} else if p, ok := i.players[id]; !ok {
+		return "", errs.ErrPlayerNotFound
+	} else if p.RoomID == "" {
+		return "", errs.ErrPlayerNotInRoom
+	} else if r, ok := i.rooms[p.RoomID]; !ok {
+		return "", errs.ErrRoomNotFound
+	} else if rp, err := r.GetPlayerBySeat(seat); err != nil {
+		return "", err
+	} else {
+		return rp.ID, nil
+	}
+}
+
 func (i ImplServer) getPlayer(ctx context.Context) (*player.Player, error) {
 	pid, err := i.GetID(ctx)
 	if err != nil {
@@ -254,16 +284,18 @@ func (i ImplServer) RemovePlayer(ctx context.Context, request *RemovePlayerReque
 		return nil, errs.ErrPlayerNotOwner
 	}
 	p2Remove, err := r.GetPlayerBySeat(request.Seat)
+	p2Seat := p2Remove.Seat
+	p2Name := p2Remove.Name
 	if err != nil {
 		return nil, err
 	}
-	if err := r.Leave(p2Remove); err != nil {
+	if err := r.LeaveRoomBySeat(p2Seat); err != nil {
 		return nil, err
 	}
 	return &PlayerLeaveReply{
-		Seat:       p2Remove.Seat,
+		Seat:       p2Seat,
 		OwnerSeat:  r.OwnerSeat,
-		PlayerName: p2Remove.Name,
+		PlayerName: p2Name,
 	}, nil
 }
 
@@ -284,6 +316,9 @@ func (i ImplServer) ListPlayerIDs(ctx context.Context) (reply *ListPlayerIDsRepl
 	}
 	ids := make([]string, 0)
 	for _, p := range r.Players {
+		if p.ID == "" {
+			continue
+		}
 		ids = append(ids, p.ID)
 	}
 	return &ListPlayerIDsReply{

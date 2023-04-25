@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/hphphp123321/mahjong-go/mahjong"
 	"github.com/hphphp123321/mahjong-server/app/model/room"
 )
 
@@ -74,4 +75,22 @@ type ListRobotsReply struct {
 
 type ListPlayerIDsReply struct {
 	PlayerIDs []string
+}
+
+type StartGameRequest struct {
+	Rule *mahjong.Rule
+	Seed int
+}
+
+type StartGameReply struct {
+	IDSlice []string
+}
+
+type StepRequest struct {
+	MapIDAction map[string]*mahjong.Call
+}
+
+type StepReply struct {
+	Events       map[string]mahjong.Events
+	ValidActions map[string]mahjong.Calls
 }
