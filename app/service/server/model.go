@@ -86,11 +86,12 @@ type StartGameReply struct {
 	SeatsOrder []int
 }
 
-type StepRequest struct {
-	MapIDAction map[string]*mahjong.Call
+type StreamRequest struct {
+	Call chan *mahjong.Call
 }
 
-type StepReply struct {
-	Events       map[string]mahjong.Events
-	ValidActions map[string]mahjong.Calls
+type StreamReply struct {
+	Events     chan mahjong.Events
+	ValidCalls chan mahjong.Calls
+	Error      chan error
 }

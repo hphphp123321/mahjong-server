@@ -48,7 +48,7 @@ func BoardCastReadyReply(ctx context.Context, server *MahjongServer, reply *pb.R
 	return err
 }
 
-func SendBack(ctx context.Context, server *MahjongServer, reply *pb.ReadyReply) error {
+func SendBackReady(ctx context.Context, server *MahjongServer, reply *pb.ReadyReply) error {
 	cid, err := server.s.GetID(ctx)
 	if err != nil {
 		return err
@@ -102,7 +102,7 @@ func StartReadyStream(ctx context.Context, stream pb.Mahjong_ReadyServer, server
 				reply, err := handleAddRobot(ctx, server, in)
 				sendChan(replyChan, done, reply, err)
 			case *pb.ReadyRequest_Chat:
-				reply, err := handleChat(ctx, server, in)
+				reply, err := handleReadyChat(ctx, server, in)
 				sendChan(replyChan, done, reply, err)
 			case *pb.ReadyRequest_StartGame:
 				reply, err := handleStartGame(ctx, server, in)
@@ -122,7 +122,7 @@ func handleRefreshRoom(ctx context.Context, server *MahjongServer, in *pb.ReadyR
 		Message: "",
 		Reply:   &pb.ReadyReply_RefreshRoomReply{RefreshRoomReply: MapToRoomInfo(info)},
 	}
-	if err := SendBack(ctx, server, reply); err != nil {
+	if err := SendBackReady(ctx, server, reply); err != nil {
 		return nil, fmt.Errorf("handle refresh room: %s", err)
 	}
 	return nil, nil
@@ -220,7 +220,7 @@ func handleAddRobot(ctx context.Context, server *MahjongServer, in *pb.ReadyRequ
 	return ToPbAddRobotReply(r), nil
 }
 
-func handleChat(ctx context.Context, server *MahjongServer, in *pb.ReadyRequest) (reply *pb.ReadyReply, err error) {
+func handleReadyChat(ctx context.Context, server *MahjongServer, in *pb.ReadyRequest) (reply *pb.ReadyReply, err error) {
 	name, err := server.s.GetName(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("handle chat: %s", err)
@@ -229,7 +229,7 @@ func handleChat(ctx context.Context, server *MahjongServer, in *pb.ReadyRequest)
 	if err != nil {
 		return nil, fmt.Errorf("handle chat: %s", err)
 	}
-	return ToPbChatReply(in, name, seat), nil
+	return ToPbReadyChatReply(in, name, seat), nil
 }
 
 func handleStartGame(ctx context.Context, server *MahjongServer, in *pb.ReadyRequest) (reply *pb.ReadyReply, err error) {

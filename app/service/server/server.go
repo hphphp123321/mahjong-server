@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"github.com/hphphp123321/mahjong-go/mahjong"
 	"github.com/hphphp123321/mahjong-server/app/errs"
 	"github.com/hphphp123321/mahjong-server/app/global"
 	"github.com/hphphp123321/mahjong-server/app/model/player"
@@ -348,4 +349,39 @@ func (i ImplServer) StartGame(ctx context.Context, request *StartGameRequest) (r
 	return &StartGameReply{
 		SeatsOrder: seatsOrder,
 	}, nil
+}
+
+func (i ImplServer) StartStream(ctx context.Context, request *StreamRequest) (reply *StreamReply, err error) {
+	p, err := i.getPlayer(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if p.RoomID == "" {
+		return nil, errs.ErrPlayerNotInRoom
+	}
+	r, ok := i.rooms[p.RoomID]
+	if !ok {
+		return nil, errs.ErrRoomNotFound
+	}
+	ech, vch, errChan := r.StartGameStream(p, request.Call)
+	return &StreamReply{
+		Events:     ech,
+		ValidCalls: vch,
+		Error:      errChan,
+	}, nil
+}
+
+func (i ImplServer) GetBoardState(ctx context.Context) (*mahjong.BoardState, error) {
+	p, err := i.getPlayer(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if p.RoomID == "" {
+		return nil, errs.ErrPlayerNotInRoom
+	}
+	r, ok := i.rooms[p.RoomID]
+	if !ok {
+		return nil, errs.ErrRoomNotFound
+	}
+	return r.GetBoardState(p)
 }

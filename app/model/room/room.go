@@ -3,6 +3,7 @@ package room
 import (
 	"github.com/hphphp123321/mahjong-go/mahjong"
 	"github.com/hphphp123321/mahjong-server/app/errs"
+	"github.com/hphphp123321/mahjong-server/app/global"
 	"github.com/hphphp123321/mahjong-server/app/model/player"
 	"math/rand"
 	"sync"
@@ -15,11 +16,8 @@ type Room struct {
 
 	OwnerSeat int
 
-	mu sync.RWMutex
-
-	seatsOrder  []int
-	game        *mahjong.Game
-	gamePlayers map[int]*mahjong.Player
+	gameRoom *GameRoom
+	mu       sync.RWMutex
 }
 
 func NewRoom(p *player.Player, name string, id string) (*Room, error) {
@@ -204,14 +202,42 @@ func (r *Room) StartGame(rule *mahjong.Rule, seed int64) ([]int, error) {
 	if !r.CheckAllReady() {
 		return nil, errs.ErrRoomNotAllReady
 	}
-	r.game = mahjong.NewMahjongGame(seed, rule)
+	game := mahjong.NewMahjongGame(seed, rule)
 	seatsToShuffle := []int{1, 2, 3, 4}
 	rand.Shuffle(4, func(i, j int) {
 		seatsToShuffle[i], seatsToShuffle[j] = seatsToShuffle[j], seatsToShuffle[i]
 	})
-	for seat, _ := range r.Players {
-		r.gamePlayers[seat] = mahjong.NewMahjongPlayer()
+	r.gameRoom = NewGameRoom(game, seatsToShuffle)
+
+	// Start robot
+	for seat, p := range r.Players {
+		if p.ID != "" {
+			continue
+		}
+		if robot, ok := global.RobotRegistry.GetRobot(p.Name); !ok {
+			continue
+		} else {
+			actionChan := player.InitRobotStream()
+			ech, vch, errCh := r.gameRoom.RegisterSeat(seat, actionChan)
+			player.StartRobotStream(robot, ech, vch, actionChan, errCh)
+		}
 	}
-	r.seatsOrder = seatsToShuffle
+
+	// Start Game
+	r.gameRoom.StartGame()
 	return seatsToShuffle, nil
+}
+
+func (r *Room) StartGameStream(p *player.Player, action chan *mahjong.Call) (event chan mahjong.Events, validActions chan mahjong.Calls, error chan error) {
+	return r.gameRoom.RegisterSeat(p.Seat, action)
+}
+
+func (r *Room) GetBoardState(p *player.Player) (*mahjong.BoardState, error) {
+	if r.gameRoom == nil {
+		return nil, errs.ErrGameNotStart
+	}
+	if _, ok := r.Players[p.Seat]; !ok {
+		return nil, errs.ErrPlayerNotInRoom
+	}
+	return r.gameRoom.getBoardStateBySeat(p.Seat), nil
 }

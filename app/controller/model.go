@@ -2,6 +2,7 @@ package controller
 
 import (
 	"github.com/hphphp123321/go-common"
+	"github.com/hphphp123321/mahjong-go/mahjong"
 	pb "github.com/hphphp123321/mahjong-server/app/api/v1"
 	"github.com/hphphp123321/mahjong-server/app/model/player"
 	"github.com/hphphp123321/mahjong-server/app/model/room"
@@ -68,5 +69,11 @@ func ToPbListRoomsReply(reply *server.ListRoomsReply) *pb.ListRoomsReply {
 func ToPbListRobotsReply(reply *server.ListRobotsReply) *pb.ListRobotsReply {
 	return &pb.ListRobotsReply{
 		RobotTypes: reply.RobotTypes,
+	}
+}
+
+func ToServerStartStreamRequest(actionChan chan *mahjong.Call) *server.StreamRequest {
+	return &server.StreamRequest{
+		Call: actionChan,
 	}
 }

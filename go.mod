@@ -6,7 +6,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/hphphp123321/go-common v0.0.0-20230419113915-7ac9d9c533b6
 	github.com/hphphp123321/mahjong-common v0.0.0-20230419124037-ca1bc465db32
-	github.com/hphphp123321/mahjong-go v0.0.0-20230415133141-682444646952
+	github.com/hphphp123321/mahjong-go v0.0.0-20230426114834-5314a7222377
 	github.com/sirupsen/logrus v1.9.0
 	go.uber.org/zap v1.24.0
 	google.golang.org/grpc v1.54.0

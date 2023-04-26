@@ -119,7 +119,7 @@ message ReadyReply {
 
 message GameRequest {
   oneof request {
-    Empty ping = 1;
+    Empty refreshGame = 1;
     Call action = 2;
     ChatRequest chat = 3;
   }
@@ -129,10 +129,11 @@ message GameReply {
   string message = 1;
   repeated Event events = 2;
   oneof reply {
-    Empty pong = 3;
+    BoardState refreshGameReply = 3;
     ChatReply chat = 5;
   }
   repeated Call validActions = 4;
+  optional bool end = 6;
 }
 
 message LeaveRoomRequest {
@@ -236,7 +237,7 @@ message EventEnd {
 
 message EventGet {
   Wind who = 1;
-  optional Tile tile = 2;
+  Tile tile = 2;
 }
 
 message EventDiscard {
@@ -276,7 +277,7 @@ message EventTsumo {
 }
 
 message EventRyuuKyoKu {
-  optional Wind who = 1;
+  Wind who = 1;
   repeated Tile handTiles = 2;
   RyuuKyoKuReason reason = 3;
 }
@@ -342,7 +343,7 @@ message ScoreResult {
 }
 
 message YakuResult {
-  repeated YakuSet yakuSet = 1;
+  repeated YakuSet yakuSets = 1;
   repeated Yakuman yakumans = 2;
   repeated YakuSet bonuses = 3;
   repeated FuInfo fus = 4;
@@ -357,6 +358,30 @@ message YakuSet {
 message FuInfo {
   Fu fu = 1;
   int32 points = 2;
+}
+
+message BoardState {
+  WindRound windRound = 1;
+  int32 NumHonba = 2;
+  int32 NumRiichi = 3;
+  repeated Tile doraIndicators = 4;
+  Wind playerWind = 5;
+  Wind position = 6;
+  repeated Tile handTiles = 7;
+  repeated Call ValidActions = 8;
+  int32 numRemainTiles = 9;
+  PlayerState east = 10;
+  PlayerState south = 11;
+  PlayerState west = 12;
+  PlayerState north = 13;
+}
+
+message PlayerState {
+  int32 points = 1;
+  repeated Call melds = 2;
+  repeated Tile discardTiles = 3;
+  repeated bool tilesTsumoGiri = 4;
+  bool isRiichi = 5;
 }
 
 enum Limit {
@@ -378,10 +403,9 @@ enum RyuuKyoKuReason {
 }
 
 enum FuritenReason {
-  FuritenNone = 0;
-  FuritenJun = 1;
-  FuritenDiscard = 2;
-  FuritenRiichi = 3;
+  FuritenJun = 0;
+  FuritenDiscard = 1;
+  FuritenRiichi = 2;
 }
 
 enum Wind {

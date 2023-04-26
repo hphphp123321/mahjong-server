@@ -122,7 +122,27 @@ TagBreak:
 	return RemoveReadyStream(ctx, &m)
 }
 
-func (m MahjongServer) Game(server pb.Mahjong_GameServer) error {
-	//TODO implement me
-	panic("implement me")
+func (m MahjongServer) Game(stream pb.Mahjong_GameServer) error {
+	ctx := stream.Context()
+	if err := AddGameStream(ctx, stream, &m); err != nil {
+		return err
+	}
+	recvDone, actionChan := StartGameRecvStream(ctx, stream, &m)
+	r, err := m.s.StartStream(ctx, ToServerStartStreamRequest(actionChan))
+	if err != nil {
+		return err
+	}
+	sendDone := StartGameSendStream(ctx, stream, r)
+	select {
+	case <-ctx.Done():
+	case err = <-recvDone:
+		if err != nil {
+			global.Log.Warnln("game recv stream done: ", err)
+		}
+	case err = <-sendDone:
+		if err != nil {
+			global.Log.Warnln("game send stream done: ", err)
+		}
+	}
+	return RemoveGameStream(ctx, &m)
 }

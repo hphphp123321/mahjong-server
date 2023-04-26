@@ -20,8 +20,9 @@ func (r *Registry) Unregister(robotType string) {
 	delete(r.robots, robotType)
 }
 
-func (r *Registry) GetRobot(robotType string) Robot {
-	return r.robots[robotType]
+func (r *Registry) GetRobot(robotType string) (robot Robot, ok bool) {
+	robot, ok = r.robots[robotType]
+	return robot, ok
 }
 
 func (r *Registry) GetRobotTypes() []string {
@@ -47,5 +48,6 @@ func (r *Registry) GetRandomRobotType() string {
 }
 
 func (r *Registry) GetRandomRobot() Robot {
-	return r.GetRobot(r.GetRandomRobotType())
+	robot, _ := r.GetRobot(r.GetRandomRobotType())
+	return robot
 }

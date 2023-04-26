@@ -93,7 +93,7 @@ func ToPbAddRobotReply(r *server.AddRobotReply) *pb.ReadyReply {
 	}
 }
 
-func ToPbChatReply(in *pb.ReadyRequest, playerName string, seat int) *pb.ReadyReply {
+func ToPbReadyChatReply(in *pb.ReadyRequest, playerName string, seat int) *pb.ReadyReply {
 	return &pb.ReadyReply{
 		Message: ChatMsg(playerName, in.GetChat().Message),
 		Reply: &pb.ReadyReply_Chat{Chat: &pb.ChatReply{
@@ -105,7 +105,7 @@ func ToPbChatReply(in *pb.ReadyRequest, playerName string, seat int) *pb.ReadyRe
 
 func ToServerStartGameRequest(in *pb.ReadyRequest) *server.StartGameRequest {
 	return &server.StartGameRequest{
-		Rule: ToGameRule(in.GetStartGame().GetGameRule()),
+		Rule: ToMahjongGameRule(in.GetStartGame().GetGameRule()),
 		Seed: in.GetStartGame().GetSeed(),
 	}
 }

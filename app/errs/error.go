@@ -20,4 +20,6 @@ var (
 	ErrStreamNotFound      = errors.New("stream not found")
 	ErrRoomNotFull         = errors.New("room is not full")
 	ErrRoomNotAllReady     = errors.New("room is not all ready")
+	ErrGameEnd             = errors.New("game end")
+	ErrGameNotStart        = errors.New("game not start")
 )
