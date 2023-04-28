@@ -24,7 +24,7 @@ func newStreamServer(s grpc.ServerStream) grpc.ServerStream {
 	return &streamServer{s}
 }
 
-// RecvMsg从流中接收消息
+// RecvMsg 从流中接收消息
 func (e *streamServer) RecvMsg(m interface{}) error {
 	// 在这里，我们可以对接收到的消息执行额外的逻辑，例如
 	// 验证

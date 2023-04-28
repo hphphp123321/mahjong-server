@@ -3,6 +3,7 @@ package room
 import (
 	"github.com/hphphp123321/mahjong-go/mahjong"
 	"github.com/hphphp123321/mahjong-server/app/errs"
+	"github.com/hphphp123321/mahjong-server/app/global"
 )
 
 type GameRoom struct {
@@ -87,6 +88,7 @@ func (r *GameRoom) StartGame() {
 	go func() {
 		for !r.CheckRegister() {
 		}
+		global.Log.Debugln("start game")
 		// start game
 		var flag = mahjong.EndTypeNone
 		var players []*mahjong.Player

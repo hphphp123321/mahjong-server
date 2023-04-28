@@ -226,6 +226,7 @@ message EventStart {
   Tile  initDoraIndicator = 7;
   repeated Tile initTiles = 8;
   Rule gameRule = 9;
+  map<int32, int32> playersPoints = 10;
 }
 
 message EventEnd {
@@ -370,10 +371,7 @@ message BoardState {
   repeated Tile handTiles = 7;
   repeated Call ValidActions = 8;
   int32 numRemainTiles = 9;
-  PlayerState east = 10;
-  PlayerState south = 11;
-  PlayerState west = 12;
-  PlayerState north = 13;
+  map<int32, PlayerState> playerStates = 10;
 }
 
 message PlayerState {

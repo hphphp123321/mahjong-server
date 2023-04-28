@@ -171,10 +171,13 @@ func ToPbBoardState(b *mahjong.BoardState) *pb.BoardState {
 		HandTiles:      ToPbTiles(b.HandTiles),
 		ValidActions:   ToPbCalls(b.ValidActions),
 		NumRemainTiles: int32(b.NumRemainTiles),
-		East:           ToPbPlayerState(b.PlayerEast),
-		South:          ToPbPlayerState(b.PlayerSouth),
-		West:           ToPbPlayerState(b.PlayerWest),
-		North:          ToPbPlayerState(b.PlayerNorth),
+		PlayerStates: func() map[int32]*pb.PlayerState {
+			var m = make(map[int32]*pb.PlayerState)
+			for k, v := range b.PlayerStates {
+				m[int32(ToPbWind(k))] = ToPbPlayerState(v)
+			}
+			return m
+		}(),
 	}
 }
 

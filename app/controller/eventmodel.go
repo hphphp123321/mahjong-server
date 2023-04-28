@@ -17,6 +17,12 @@ func ToPbEventStart(event *mahjong.EventStart) *pb.EventStart {
 		InitDoraIndicator: ToPbTile(event.InitDoraIndicator),
 		InitTiles:         ToPbTiles(event.InitTiles),
 		GameRule:          ToPbGameRule(event.Rule),
+		PlayersPoints: map[int32]int32{
+			0: int32(event.PlayersPoints[mahjong.East]),
+			1: int32(event.PlayersPoints[mahjong.South]),
+			2: int32(event.PlayersPoints[mahjong.West]),
+			3: int32(event.PlayersPoints[mahjong.North]),
+		},
 	}
 }
 

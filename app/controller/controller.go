@@ -144,5 +144,9 @@ func (m MahjongServer) Game(stream pb.Mahjong_GameServer) error {
 			global.Log.Warnln("game send stream done: ", err)
 		}
 	}
+	close(actionChan)
+	close(r.Events)
+	close(r.ValidCalls)
+	close(r.Error)
 	return RemoveGameStream(ctx, &m)
 }

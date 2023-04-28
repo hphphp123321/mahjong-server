@@ -5,13 +5,13 @@ go 1.19
 require (
 	github.com/google/uuid v1.3.0
 	github.com/hphphp123321/go-common v0.0.0-20230419113915-7ac9d9c533b6
-	github.com/hphphp123321/mahjong-common v0.0.0-20230419124037-ca1bc465db32
-	github.com/hphphp123321/mahjong-go v0.0.0-20230426114834-5314a7222377
+	github.com/hphphp123321/mahjong-go v0.0.0-20230428114543-04e8237b1b4f
 	github.com/sirupsen/logrus v1.9.0
 	go.uber.org/zap v1.24.0
 	google.golang.org/grpc v1.54.0
 	google.golang.org/protobuf v1.30.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -28,5 +28,4 @@ require (
 	golang.org/x/sys v0.7.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
