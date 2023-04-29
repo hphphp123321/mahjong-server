@@ -196,7 +196,7 @@ func (r *Room) changeOwner() {
 func (r *Room) StartGame(rule *mahjong.Rule, seed int64) ([]int, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	if !r.IsFull() {
+	if len(r.Players) != 4 {
 		return nil, errs.ErrRoomNotFull
 	}
 	if !r.CheckAllReady() {

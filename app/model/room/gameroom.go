@@ -102,12 +102,20 @@ func (r *GameRoom) StartGame() {
 
 		for flag != mahjong.EndTypeGame {
 
-			// send events
-			for wind := range r.game.PosPlayer {
-				events := r.game.GetPosEvents(wind, playersEventIdx[wind])
-				r.sendEvent(r.getSeatByWind(wind), events)
-				playersEventIdx[wind] += len(events)
+			// round end, clear EventIdx
+			if flag == mahjong.EndTypeRound {
+				for wind := range r.game.PosPlayer {
+					playersEventIdx[wind] = 0
+				}
+			} else {
+				// send events
+				for wind := range r.game.PosPlayer {
+					events := r.game.GetPosEvents(wind, playersEventIdx[wind])
+					r.sendEvent(r.getSeatByWind(wind), events)
+					playersEventIdx[wind] += len(events)
+				}
 			}
+
 			// send valid actions
 			for wind, calls := range posCalls {
 				r.sendValidActions(r.getSeatByWind(wind), calls)
@@ -121,12 +129,6 @@ func (r *GameRoom) StartGame() {
 			posCalls, flag = r.game.Step(posCall)
 			posCall = make(map[mahjong.Wind]*mahjong.Call, 4)
 
-			// round end, clear EventIdx
-			if flag == mahjong.EndTypeRound {
-				for wind := range r.game.PosPlayer {
-					playersEventIdx[wind] = 0
-				}
-			}
 		}
 
 		// send end error
