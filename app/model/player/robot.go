@@ -18,7 +18,7 @@ func StartRobotStream(r robot.Robot, ech chan mahjong.Events, vch chan mahjong.C
 			select {
 			case err := <-error:
 				if err == errs.ErrGameEnd {
-					global.Log.Infof("robot %s end", r.GetRobotType())
+					global.Log.Debugf("robot %s end", r.GetRobotType())
 					return
 				}
 				global.Log.Warnf("robot %s error: %v", r.GetRobotType(), err)

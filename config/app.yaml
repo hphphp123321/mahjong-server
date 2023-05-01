@@ -14,7 +14,7 @@ server:
 
 
 log-config:
-  level: info # 日志等级 [DEBUG, INFO, WARN, ERROR]
+  level: debug # 日志等级 [DEBUG, INFO, WARN, ERROR]
   filename: ./log/1.log # 文件名
   maxSize: 4 # 单日志文件最大尺寸 MB
   maxAge: 30 # 最多保存天数 Day

@@ -4,6 +4,7 @@ import (
 	"github.com/hphphp123321/mahjong-go/mahjong"
 	"github.com/hphphp123321/mahjong-server/app/errs"
 	"github.com/hphphp123321/mahjong-server/app/global"
+	"time"
 )
 
 type GameRoom struct {
@@ -41,16 +42,22 @@ func (r *GameRoom) GetPlayer(seat int) *mahjong.Player {
 
 func (r *GameRoom) RegisterSeat(seat int, action chan *mahjong.Call) (ech chan mahjong.Events, vch chan mahjong.Calls, errCh chan error) {
 	r.PlayersAction[seat] = action
+
 	ech = make(chan mahjong.Events, 20)
 	r.PlayersEvents[seat] = ech
+
 	vch = make(chan mahjong.Calls, 1)
 	r.PlayersValidActions[seat] = vch
+
 	errCh = make(chan error, 1)
 	r.PlayersErrChan[seat] = errCh
 	return ech, vch, errCh
 }
 
 func (r *GameRoom) CheckRegister() bool {
+	if len(r.PlayersAction) != 4 || len(r.PlayersEvents) != 4 || len(r.PlayersValidActions) != 4 || len(r.PlayersErrChan) != 4 {
+		return false
+	}
 	for _, v := range r.PlayersAction {
 		if v == nil {
 			return false
@@ -59,8 +66,8 @@ func (r *GameRoom) CheckRegister() bool {
 	return true
 }
 
-func (r *GameRoom) sendEvent(seat int, event mahjong.Events) {
-	r.PlayersEvents[seat] <- event
+func (r *GameRoom) sendEvent(seat int, events mahjong.Events) {
+	r.PlayersEvents[seat] <- events
 }
 
 func (r *GameRoom) sendValidActions(seat int, actions mahjong.Calls) {
@@ -87,6 +94,7 @@ func (r *GameRoom) getBoardStateBySeat(seat int) *mahjong.BoardState {
 func (r *GameRoom) StartGame() {
 	go func() {
 		for !r.CheckRegister() {
+			time.Sleep(time.Millisecond * 100)
 		}
 		global.Log.Debugln("start game")
 		// start game
@@ -102,8 +110,8 @@ func (r *GameRoom) StartGame() {
 
 		for flag != mahjong.EndTypeGame {
 
-			// round end, clear EventIdx
 			if flag == mahjong.EndTypeRound {
+				// round end, clear EventIdx
 				for wind := range r.game.PosPlayer {
 					playersEventIdx[wind] = 0
 				}
