@@ -22,4 +22,5 @@ var (
 	ErrRoomNotAllReady     = errors.New("room is not all ready")
 	ErrGameEnd             = errors.New("game end")
 	ErrGameNotStart        = errors.New("game not start")
+	ErrGameEndUnexpect     = errors.New("game end unexpect")
 )

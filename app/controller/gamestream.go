@@ -77,15 +77,16 @@ func StartGameSendStream(ctx context.Context, stream pb.Mahjong_GameServer, chan
 			case <-ctx.Done():
 				global.Log.Infof("send game stream done")
 			case err := <-errChan:
+				if errS := SendGameEnd(stream); err != nil {
+					global.Log.Warnf("send game end failed: %v", errS)
+				}
 				if err == errs.ErrGameEnd {
 					global.Log.Infof("send game stream end")
-					if err := SendGameEnd(stream); err != nil {
-						global.Log.Warnf("send game end failed: %v", err)
-					}
 					done <- nil
 					return
 				} else {
-					done <- err
+					global.Log.Warnf("send game stream error: %v", err)
+					done <- nil
 					return
 				}
 			case events := <-eventsChan:

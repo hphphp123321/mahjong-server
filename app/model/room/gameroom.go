@@ -97,6 +97,16 @@ func (r *GameRoom) StartGame() {
 			time.Sleep(time.Millisecond * 100)
 		}
 		global.Log.Debugln("start game")
+
+		defer func() {
+			if err := recover(); err != nil {
+				// send end error
+				for seat := range r.seat2Order {
+					r.PlayersErrChan[seat] <- errs.ErrGameEndUnexpect
+				}
+			}
+		}()
+
 		// start game
 		var flag = mahjong.EndTypeNone
 		var players []*mahjong.Player
