@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 option go_package = "api.mahjong.v1";
+option csharp_namespace = "mahjongProto";
 
 package mahjong;
 
@@ -212,7 +213,7 @@ message Event {
     EventRyuuKyoKu eventRyuuKyoKu = 10;
     EventFuriten eventFuriten = 11;
     EventNagashiMangan eventNagashiMangan = 12;
-    EventTenhaiEnd eventTenhaiEnd = 13;
+    EventTenpaiEnd eventTenpaiEnd = 13;
   }
 }
 
@@ -239,18 +240,20 @@ message EventEnd {
 message EventGet {
   Wind who = 1;
   Tile tile = 2;
+  map<int32, TenpaiInfo> tenpaiInfos = 3;
 }
 
 message EventDiscard {
   Wind who = 1;
   Tile tile = 2;
   bool tsumoGiri = 3;
-  repeated TileClass tenhaiSlice = 4;
+  optional TenpaiInfo tenpaiInfo = 4;
 }
 
 message EventCall {
   Wind who = 1;
   Call call = 2;
+  map<int32, TenpaiInfo> tenpaiInfos = 3;
 }
 
 message EventRiichi {
@@ -292,10 +295,10 @@ message EventNagashiMangan {
   Wind who = 1;
 }
 
-message EventTenhaiEnd {
+message EventTenpaiEnd {
   Wind who = 1;
   repeated Tile handTiles = 2;
-  repeated TileClass tenhaiSlice = 3;
+  repeated TileClass tenpaiSlice = 3;
 }
 
 message Result {
@@ -382,6 +385,16 @@ message PlayerState {
   bool isRiichi = 5;
 }
 
+message TenpaiInfo {
+  map<int32, TenpaiResult> TileClassesTenpaiResult = 1;
+  bool Furiten = 2;
+}
+
+message TenpaiResult {
+  int32 RemainNum = 1;
+  Result Result = 2;
+}
+
 enum Limit {
   LimitNone = 0;
   LimitMangan = 1;
@@ -401,9 +414,10 @@ enum RyuuKyoKuReason {
 }
 
 enum FuritenReason {
-  FuritenJun = 0;
-  FuritenDiscard = 1;
-  FuritenRiichi = 2;
+  FuritenNone = 0;
+  FuritenJun = 1;
+  FuritenDiscard = 2;
+  FuritenRiichi = 3;
 }
 
 enum Wind {

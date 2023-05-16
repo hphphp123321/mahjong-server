@@ -28,40 +28,43 @@ func ToPbEventStart(event *mahjong.EventStart) *pb.EventStart {
 
 func ToPbEventGet(event *mahjong.EventGet) *pb.EventGet {
 	return &pb.EventGet{
-		Who:  ToPbWind(event.Who),
-		Tile: ToPbTile(event.Tile),
+		Who:         ToPbWind(event.Who),
+		Tile:        ToPbTile(event.Tile),
+		TenpaiInfos: ToPbTenpaiInfos(*event.TenpaiInfos),
 	}
 }
 
 func ToPbEventDiscard(event *mahjong.EventDiscard) *pb.EventDiscard {
 	return &pb.EventDiscard{
-		Who:         ToPbWind(event.Who),
-		Tile:        ToPbTile(event.Tile),
-		TsumoGiri:   false,
-		TenhaiSlice: ToPbTileClasses(event.TenhaiSlice),
+		Who:        ToPbWind(event.Who),
+		Tile:       ToPbTile(event.Tile),
+		TsumoGiri:  false,
+		TenpaiInfo: ToPbTenpaiInfo(event.TenpaiInfo),
 	}
 }
 
 func ToPbEventTsumoGiri(event *mahjong.EventTsumoGiri) *pb.EventDiscard {
 	return &pb.EventDiscard{
-		Who:         ToPbWind(event.Who),
-		Tile:        ToPbTile(event.Tile),
-		TsumoGiri:   true,
-		TenhaiSlice: ToPbTileClasses(event.TenhaiSlice),
+		Who:        ToPbWind(event.Who),
+		Tile:       ToPbTile(event.Tile),
+		TsumoGiri:  true,
+		TenpaiInfo: ToPbTenpaiInfo(event.TenpaiInfo),
 	}
 }
 
 func ToPbEventChi(event *mahjong.EventChi) *pb.EventCall {
 	return &pb.EventCall{
-		Who:  ToPbWind(event.Who),
-		Call: ToPbCall(event.Call),
+		Who:         ToPbWind(event.Who),
+		Call:        ToPbCall(event.Call),
+		TenpaiInfos: ToPbTenpaiInfos(*event.TenpaiInfos),
 	}
 }
 
 func ToPbEventPon(event *mahjong.EventPon) *pb.EventCall {
 	return &pb.EventCall{
-		Who:  ToPbWind(event.Who),
-		Call: ToPbCall(event.Call),
+		Who:         ToPbWind(event.Who),
+		Call:        ToPbCall(event.Call),
+		TenpaiInfos: ToPbTenpaiInfos(*event.TenpaiInfos),
 	}
 }
 
@@ -158,11 +161,11 @@ func ToPbNagashiMangan(event *mahjong.EventNagashiMangan) *pb.EventNagashiMangan
 	}
 }
 
-func ToPbTenhaiEnd(event *mahjong.EventTenhaiEnd) *pb.EventTenhaiEnd {
-	return &pb.EventTenhaiEnd{
+func ToPbTenpaiEnd(event *mahjong.EventTenpaiEnd) *pb.EventTenpaiEnd {
+	return &pb.EventTenpaiEnd{
 		Who:         ToPbWind(event.Who),
 		HandTiles:   ToPbTiles(event.HandTiles),
-		TenhaiSlice: ToPbTileClasses(event.TenhaiSlice),
+		TenpaiSlice: ToPbTileClasses(event.TenpaiSlice),
 	}
 }
 
@@ -262,11 +265,186 @@ func ToPbEvent(event mahjong.Event) *pb.Event {
 			Event: &pb.Event_EventNagashiMangan{
 				EventNagashiMangan: ToPbNagashiMangan(event.(*mahjong.EventNagashiMangan)),
 			}}
-	case mahjong.EventTypeTenhaiEnd:
+	case mahjong.EventTypeTenpaiEnd:
 		return &pb.Event{
-			Event: &pb.Event_EventTenhaiEnd{
-				EventTenhaiEnd: ToPbTenhaiEnd(event.(*mahjong.EventTenhaiEnd)),
+			Event: &pb.Event_EventTenpaiEnd{
+				EventTenpaiEnd: ToPbTenpaiEnd(event.(*mahjong.EventTenpaiEnd)),
 			}}
+	default:
+		panic("unknown event type")
+	}
+	return nil
+}
+
+// -------------------------------------------------------------------------------
+// To Mahjong
+
+func ToMahjongEventStart(event *pb.EventStart) *mahjong.EventStart {
+	return &mahjong.EventStart{
+		WindRound:         ToMahjongWindRound(event.WindRound),
+		InitWind:          ToMahjongWind(event.InitWind),
+		Seed:              event.Seed,
+		NumGame:           int(event.NumGame),
+		NumHonba:          int(event.NumHonba),
+		NumRiichi:         int(event.NumRiichi),
+		InitDoraIndicator: ToMahjongTile(event.InitDoraIndicator),
+		InitTiles:         ToMahjongTiles(event.InitTiles),
+		Rule:              ToMahjongGameRule(event.GameRule),
+		PlayersPoints: map[mahjong.Wind]int{
+			mahjong.East:  int(event.PlayersPoints[0]),
+			mahjong.South: int(event.PlayersPoints[1]),
+			mahjong.West:  int(event.PlayersPoints[2]),
+			mahjong.North: int(event.PlayersPoints[3]),
+		},
+	}
+}
+
+func ToMahjongEventGet(event *pb.EventGet) *mahjong.EventGet {
+	return &mahjong.EventGet{
+		Who:         ToMahjongWind(event.Who),
+		Tile:        ToMahjongTile(event.Tile),
+		TenpaiInfos: ToMahjongTenpaiInfos(event.TenpaiInfos),
+	}
+}
+
+func ToMahjongEventDiscard(event *pb.EventDiscard) mahjong.Event {
+	if event.TsumoGiri {
+		return &mahjong.EventTsumoGiri{
+			Who:        ToMahjongWind(event.Who),
+			Tile:       ToMahjongTile(event.Tile),
+			TenpaiInfo: ToMahjongTenpaiInfo(event.TenpaiInfo),
+		}
+	}
+	return &mahjong.EventDiscard{
+		Who:        ToMahjongWind(event.Who),
+		Tile:       ToMahjongTile(event.Tile),
+		TenpaiInfo: ToMahjongTenpaiInfo(event.TenpaiInfo),
+	}
+}
+
+func ToMahjongEventCall(event *pb.EventCall) mahjong.Event {
+	who := ToMahjongWind(event.Who)
+	call := ToMahjongCall(event.Call)
+	switch call.CallType {
+	case mahjong.Chi:
+		return &mahjong.EventChi{Who: who, Call: call}
+	case mahjong.Pon:
+		return &mahjong.EventPon{Who: who, Call: call}
+	case mahjong.DaiMinKan:
+		return &mahjong.EventDaiMinKan{Who: who, Call: call}
+	case mahjong.ShouMinKan:
+		return &mahjong.EventShouMinKan{Who: who, Call: call}
+	case mahjong.AnKan:
+		return &mahjong.EventAnKan{Who: who, Call: call}
+	default:
+		panic("unknown call type")
+	}
+}
+
+func ToMahjongEventRiichi(event *pb.EventRiichi) *mahjong.EventRiichi {
+	return &mahjong.EventRiichi{
+		Who:  ToMahjongWind(event.Who),
+		Step: int(event.Step),
+	}
+}
+
+func ToMahjongEventRon(event *pb.EventRon) *mahjong.EventRon {
+	return &mahjong.EventRon{
+		Who:       ToMahjongWind(event.Who),
+		FromWho:   ToMahjongWind(event.FromWho),
+		HandTiles: ToMahjongTiles(event.HandTiles),
+		WinTile:   ToMahjongTile(event.WinTile),
+		Result:    ToMahjongResult(event.Result),
+	}
+}
+
+func ToMahjongEventTsumo(event *pb.EventTsumo) *mahjong.EventTsumo {
+	return &mahjong.EventTsumo{
+		Who:       ToMahjongWind(event.Who),
+		HandTiles: ToMahjongTiles(event.HandTiles),
+		WinTile:   ToMahjongTile(event.WinTile),
+		Result:    ToMahjongResult(event.Result),
+	}
+}
+
+func ToMahjongEventNewIndicator(event *pb.EventNewIndicator) *mahjong.EventNewIndicator {
+	return &mahjong.EventNewIndicator{
+		Tile: ToMahjongTile(event.Tile),
+	}
+}
+
+func ToMahjongEventRyuuKyoku(event *pb.EventRyuuKyoKu) *mahjong.EventRyuuKyoku {
+	return &mahjong.EventRyuuKyoku{
+		Who:       ToMahjongWind(event.Who),
+		HandTiles: ToMahjongTiles(event.HandTiles),
+		Reason:    mahjong.RyuuKyokuReason(event.Reason),
+	}
+}
+
+func ToMahjongEventEnd(event *pb.EventEnd) *mahjong.EventEnd {
+	return &mahjong.EventEnd{
+		PointsChange: map[mahjong.Wind]int{
+			mahjong.East:  int(event.EastPointsChange),
+			mahjong.South: int(event.SouthPointsChange),
+			mahjong.West:  int(event.WestPointsChange),
+			mahjong.North: int(event.NorthPointsChange),
+		},
+	}
+}
+
+func ToMahjongEventFuriten(event *pb.EventFuriten) *mahjong.EventFuriten {
+	return &mahjong.EventFuriten{
+		Who:           ToMahjongWind(event.Who),
+		FuritenReason: mahjong.FuritenReason(event.Reason),
+	}
+}
+
+func ToMahjongEventNagashiMangan(event *pb.EventNagashiMangan) *mahjong.EventNagashiMangan {
+	return &mahjong.EventNagashiMangan{
+		Who: ToMahjongWind(event.Who),
+	}
+}
+
+func ToMahjongEventTenhaiEnd(event *pb.EventTenhaiEnd) *mahjong.EventTenhaiEnd {
+	return &mahjong.EventTenhaiEnd{
+		Who:         ToMahjongWind(event.Who),
+		HandTiles:   ToMahjongTiles(event.HandTiles),
+		TenhaiSlice: ToMahjongTileClasses(event.TenhaiSlice),
+	}
+}
+
+func ToMahjongEvents(events []*pb.Event) []mahjong.Event {
+	return common.MapSlice(events, ToMahjongEvent)
+}
+
+func ToMahjongEvent(event *pb.Event) mahjong.Event {
+	switch e := event.Event.(type) {
+	case *pb.Event_EventStart:
+		return ToMahjongEventStart(e.EventStart)
+	case *pb.Event_EventGet:
+		return ToMahjongEventGet(e.EventGet)
+	case *pb.Event_EventDiscard:
+		return ToMahjongEventDiscard(e.EventDiscard)
+	case *pb.Event_EventCall:
+		return ToMahjongEventCall(e.EventCall)
+	case *pb.Event_EventRiichi:
+		return ToMahjongEventRiichi(e.EventRiichi)
+	case *pb.Event_EventRon:
+		return ToMahjongEventRon(e.EventRon)
+	case *pb.Event_EventTsumo:
+		return ToMahjongEventTsumo(e.EventTsumo)
+	case *pb.Event_EventNewIndicator:
+		return ToMahjongEventNewIndicator(e.EventNewIndicator)
+	case *pb.Event_EventRyuuKyoKu:
+		return ToMahjongEventRyuuKyoku(e.EventRyuuKyoKu)
+	case *pb.Event_EventEnd:
+		return ToMahjongEventEnd(e.EventEnd)
+	case *pb.Event_EventFuriten:
+		return ToMahjongEventFuriten(e.EventFuriten)
+	case *pb.Event_EventNagashiMangan:
+		return ToMahjongEventNagashiMangan(e.EventNagashiMangan)
+	case *pb.Event_EventTenhaiEnd:
+		return ToMahjongEventTenhaiEnd(e.EventTenhaiEnd)
 	default:
 		panic("unknown event type")
 	}

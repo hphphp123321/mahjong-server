@@ -160,6 +160,16 @@ func ToPbPlayerState(ps *mahjong.PlayerState) *pb.PlayerState {
 	}
 }
 
+func ToMahjongPlayerState(ps *pb.PlayerState) *mahjong.PlayerState {
+	return &mahjong.PlayerState{
+		Points:         int(ps.Points),
+		Melds:          ToMahjongCalls(ps.Melds),
+		DiscardTiles:   ToMahjongTiles(ps.DiscardTiles),
+		TilesTsumoGiri: ps.TilesTsumoGiri,
+		IsRiichi:       ps.IsRiichi,
+	}
+}
+
 func ToPbBoardState(b *mahjong.BoardState) *pb.BoardState {
 	return &pb.BoardState{
 		WindRound:      ToPbWindRound(b.WindRound),
@@ -181,6 +191,27 @@ func ToPbBoardState(b *mahjong.BoardState) *pb.BoardState {
 	}
 }
 
+func ToMahjongBoardState(b *pb.BoardState) *mahjong.BoardState {
+	return &mahjong.BoardState{
+		WindRound:      ToMahjongWindRound(b.WindRound),
+		NumHonba:       int(b.NumHonba),
+		NumRiichi:      int(b.NumRiichi),
+		DoraIndicators: ToMahjongTiles(b.DoraIndicators),
+		PlayerWind:     ToMahjongWind(b.PlayerWind),
+		Position:       ToMahjongWind(b.Position),
+		HandTiles:      ToMahjongTiles(b.HandTiles),
+		ValidActions:   ToMahjongCalls(b.ValidActions),
+		NumRemainTiles: int(b.NumRemainTiles),
+		PlayerStates: func() map[mahjong.Wind]*mahjong.PlayerState {
+			var m = make(map[mahjong.Wind]*mahjong.PlayerState)
+			for k, v := range b.PlayerStates {
+				m[ToMahjongWind(pb.Wind(k))] = ToMahjongPlayerState(v)
+			}
+			return m
+		}(),
+	}
+}
+
 func ToPbYakuSets(yakuSet mahjong.YakuSet) []*pb.YakuSet {
 	yakuSets := make([]*pb.YakuSet, 0, len(yakuSet))
 	for yaku, han := range yakuSet {
@@ -192,12 +223,28 @@ func ToPbYakuSets(yakuSet mahjong.YakuSet) []*pb.YakuSet {
 	return yakuSets
 }
 
+func ToMahjongYakuSets(yakuSets []*pb.YakuSet) mahjong.YakuSet {
+	yakuSet := make(mahjong.YakuSet, len(yakuSets))
+	for _, y := range yakuSets {
+		yakuSet[mahjong.Yaku(y.Yaku)] = int(y.Han)
+	}
+	return yakuSet
+}
+
 func ToPbYakuman(yakuman mahjong.Yakuman) pb.Yakuman {
 	return pb.Yakuman(yakuman)
 }
 
+func ToMahjongYakuman(yakuman pb.Yakuman) mahjong.Yakuman {
+	return mahjong.Yakuman(yakuman)
+}
+
 func ToPbYakuMans(yakuMans mahjong.Yakumans) []pb.Yakuman {
 	return common.MapSlice(yakuMans, ToPbYakuman)
+}
+
+func ToMahjongYakuMans(yakuMans []pb.Yakuman) mahjong.Yakumans {
+	return common.MapSlice(yakuMans, ToMahjongYakuman)
 }
 
 func ToPbFuInfo(fuInfo *mahjong.FuInfo) *pb.FuInfo {
@@ -207,8 +254,19 @@ func ToPbFuInfo(fuInfo *mahjong.FuInfo) *pb.FuInfo {
 	}
 }
 
+func ToMahjongFuInfo(fuInfo *pb.FuInfo) *mahjong.FuInfo {
+	return &mahjong.FuInfo{
+		Fu:     mahjong.Fu(fuInfo.Fu),
+		Points: int(fuInfo.Points),
+	}
+}
+
 func ToPbFuInfos(fuInfos []*mahjong.FuInfo) []*pb.FuInfo {
 	return common.MapSlice(fuInfos, ToPbFuInfo)
+}
+
+func ToMahjongFuInfos(fuInfos []*pb.FuInfo) []*mahjong.FuInfo {
+	return common.MapSlice(fuInfos, ToMahjongFuInfo)
 }
 
 func ToPbYakuResult(yaku *mahjong.YakuResult) *pb.YakuResult {
@@ -217,6 +275,16 @@ func ToPbYakuResult(yaku *mahjong.YakuResult) *pb.YakuResult {
 		Yakumans: ToPbYakuMans(yaku.Yakumans),
 		Bonuses:  ToPbYakuSets(yaku.Bonuses),
 		Fus:      ToPbFuInfos(yaku.Fus),
+		IsClosed: yaku.IsClosed,
+	}
+}
+
+func ToMahjongYakuResult(yaku *pb.YakuResult) *mahjong.YakuResult {
+	return &mahjong.YakuResult{
+		Yaku:     ToMahjongYakuSets(yaku.YakuSets),
+		Yakumans: ToMahjongYakuMans(yaku.Yakumans),
+		Bonuses:  ToMahjongYakuSets(yaku.Bonuses),
+		Fus:      ToMahjongFuInfos(yaku.Fus),
 		IsClosed: yaku.IsClosed,
 	}
 }
@@ -233,9 +301,80 @@ func ToPbScoreResult(score *mahjong.ScoreResult) *pb.ScoreResult {
 	}
 }
 
+func ToMahjongScoreResult(score *pb.ScoreResult) *mahjong.ScoreResult {
+	return &mahjong.ScoreResult{
+		PayRon:         int(score.PayRon),
+		PayRonDealer:   int(score.PayRonDealer),
+		PayTsumo:       int(score.PayTsumo),
+		PayTsumoDealer: int(score.PayTsumoDealer),
+		Special:        mahjong.Limit(score.Special),
+		Han:            int(score.Han),
+		Fu:             int(score.Fu),
+	}
+}
+
 func ToPbResult(result *mahjong.Result) *pb.Result {
 	return &pb.Result{
 		YakuResult:  ToPbYakuResult(result.YakuResult),
 		ScoreResult: ToPbScoreResult(result.ScoreResult),
 	}
+}
+
+func ToMahjongResult(result *pb.Result) *mahjong.Result {
+	return &mahjong.Result{
+		YakuResult:  ToMahjongYakuResult(result.YakuResult),
+		ScoreResult: ToMahjongScoreResult(result.ScoreResult),
+	}
+}
+
+func ToPbTenpaiResult(result *mahjong.TenpaiResult) *pb.TenpaiResult {
+	return &pb.TenpaiResult{
+		RemainNum: int32(result.RemainNum),
+		Result:    ToPbResult(result.Result),
+	}
+}
+
+func ToMahjongTenpaiResult(result *pb.TenpaiResult) *mahjong.TenpaiResult {
+	return &mahjong.TenpaiResult{
+		RemainNum: int(result.RemainNum),
+		Result:    ToMahjongResult(result.Result),
+	}
+}
+
+func ToPbTenpaiInfo(info *mahjong.TenpaiInfo) *pb.TenpaiInfo {
+	var tileClassesTenpaiResult = make(map[int32]*pb.TenpaiResult)
+	for tileClass, result := range info.TileClassesTenpaiResult {
+		tileClassesTenpaiResult[int32(ToPbTileClass(tileClass))] = ToPbTenpaiResult(result)
+	}
+	return &pb.TenpaiInfo{
+		TileClassesTenpaiResult: tileClassesTenpaiResult,
+		Furiten:                 info.Furiten,
+	}
+}
+
+func ToMahjongTenpaiInfo(info *pb.TenpaiInfo) *mahjong.TenpaiInfo {
+	var tileClassesTenpaiResult = make(map[mahjong.TileClass]*mahjong.TenpaiResult)
+	for tileClass, result := range info.TileClassesTenpaiResult {
+		tileClassesTenpaiResult[ToMahjongTileClass(pb.TileClass(tileClass))] = ToMahjongTenpaiResult(result)
+	}
+	return &mahjong.TenpaiInfo{
+		TileClassesTenpaiResult: tileClassesTenpaiResult,
+		Furiten:                 info.Furiten,
+	}
+}
+
+func ToPbTenpaiInfos(infos mahjong.TenpaiInfos) map[int32]*pb.TenpaiInfo {
+	var m = make(map[int32]*pb.TenpaiInfo)
+	for tile, info := range infos {
+		m[int32(ToPbTile(tile))] = ToPbTenpaiInfo(info)
+	}
+	return m
+}
+
+func ToMahjongTenpaiInfos(infos map[int32]*pb.TenpaiInfo) mahjong.TenpaiInfos {
+	var m = make(mahjong.TenpaiInfos)
+	for tile, info := range infos {
+		m[ToMahjongTile(pb.Tile(tile))] = ToMahjongTenpaiInfo(info)
+	}
+	return m
 }
