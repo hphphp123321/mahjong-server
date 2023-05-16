@@ -102,7 +102,11 @@ func (r *GameRoom) StartGame() {
 			if err := recover(); err != nil {
 				// send end error
 				for seat := range r.seat2Order {
-					r.PlayersErrChan[seat] <- errs.ErrGameEndUnexpect
+					select {
+					case r.PlayersErrChan[seat] <- errs.ErrGameEndUnexpect:
+					default:
+						global.Log.Warnln("send end error failed")
+					}
 				}
 			}
 		}()
