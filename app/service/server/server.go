@@ -131,6 +131,19 @@ func (i ImplServer) Logout(ctx context.Context) error {
 	if id, err := i.GetID(ctx); err != nil {
 		return err
 	} else {
+		p := i.players[id]
+		if p.RoomID != "" {
+			roomID := p.RoomID
+			r := i.rooms[roomID]
+			err := r.Leave(p)
+			if err != nil {
+				return err
+			}
+			if r.IsEmpty() {
+				global.Log.Infof("room id: %s is empty, delete", r.ID)
+				delete(i.rooms, roomID)
+			}
+		}
 		delete(i.players, id)
 		return nil
 	}

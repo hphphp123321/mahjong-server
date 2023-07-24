@@ -24,10 +24,10 @@ func NewRoom(p *player.Player, name string, id string) (*Room, error) {
 	r := &Room{
 		ID:        id,
 		Name:      name,
-		Players:   map[int]*player.Player{1: p},
-		OwnerSeat: 1,
+		Players:   map[int]*player.Player{0: p},
+		OwnerSeat: 0,
 	}
-	if err := p.JoinRoom(r.ID, 1); err != nil {
+	if err := p.JoinRoom(r.ID, 0); err != nil {
 		return nil, err
 	}
 	return r, nil
@@ -172,7 +172,7 @@ func (r *Room) getPlayersInfo() []*player.Info {
 }
 
 func (r *Room) getIdleSeat() int {
-	for _, seat := range []int{1, 2, 3, 4} {
+	for _, seat := range []int{0, 1, 2, 3} {
 		if _, ok := r.Players[seat]; !ok {
 			return seat
 		}
@@ -203,7 +203,7 @@ func (r *Room) StartGame(rule *mahjong.Rule, seed int64) ([]int, error) {
 		return nil, errs.ErrRoomNotAllReady
 	}
 	game := mahjong.NewMahjongGame(seed, rule)
-	seatsToShuffle := []int{1, 2, 3, 4}
+	seatsToShuffle := []int{0, 1, 2, 3}
 	rand.Shuffle(4, func(i, j int) {
 		seatsToShuffle[i], seatsToShuffle[j] = seatsToShuffle[j], seatsToShuffle[i]
 	})
