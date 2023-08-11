@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"github.com/hphphp123321/mahjong-go/mahjong"
 	pb "github.com/hphphp123321/mahjong-server/app/api/v1"
 	"github.com/hphphp123321/mahjong-server/app/errs"
@@ -67,35 +68,34 @@ func SendBackGame(ctx context.Context, server *MahjongServer, reply *pb.GameRepl
 }
 
 func StartGameSendStream(ctx context.Context, stream pb.Mahjong_GameServer, channels *server.StreamReply) (done chan error) {
-	eventsChan := channels.Events
-	validChan := channels.ValidCalls
-	errChan := channels.Error
+
 	done = make(chan error)
 	go func() {
 		for {
 			select {
 			case <-ctx.Done():
 				global.Log.Infof("send game stream done")
-			case err := <-errChan:
-				if errS := SendGameEnd(stream); err != nil {
-					global.Log.Warnf("send game end failed: %v", errS)
-				}
-				if err == errs.ErrGameEnd {
-					global.Log.Infof("send game stream end")
-					done <- nil
-					return
-				} else {
-					global.Log.Warnf("send game stream error: %v", err)
-					done <- nil
-					return
-				}
-			case events := <-eventsChan:
-				if err := SendEvents(stream, events); err != nil {
-					global.Log.Warnf("send events failed: %v", err)
-				}
-			case validCalls := <-validChan:
-				if err := SendValidActions(stream, validCalls); err != nil {
-					global.Log.Warnf("send valid actions failed: %v", err)
+			case ge := <-channels.Events:
+				if ge.Events != nil {
+					if err := SendEvents(stream, ge.Events); err != nil {
+						global.Log.Warnf("send events failed: %v", err)
+					}
+				} else if ge.Err != nil {
+					if errors.Is(ge.Err, errs.ErrGameEnd) {
+						if err := SendGameEnd(stream); err != nil {
+							global.Log.Warnf("send game end error: %v", ge.Err)
+						}
+						done <- nil
+						return
+					} else {
+						global.Log.Warnf("send game stream error: %v", ge.Err)
+						done <- nil
+						return
+					}
+				} else if ge.ValidActions != nil {
+					if err := SendValidActions(stream, ge.ValidActions); err != nil {
+						global.Log.Warnf("send valid actions failed: %v", err)
+					}
 				}
 			}
 		}

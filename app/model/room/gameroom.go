@@ -4,6 +4,7 @@ import (
 	"github.com/hphphp123321/mahjong-go/mahjong"
 	"github.com/hphphp123321/mahjong-server/app/errs"
 	"github.com/hphphp123321/mahjong-server/app/global"
+	"github.com/hphphp123321/mahjong-server/app/model/player"
 	"time"
 )
 
@@ -12,10 +13,11 @@ type GameRoom struct {
 	players    map[int]*mahjong.Player // int: Seat
 	seat2Order map[int]int             // seat -> order
 
-	PlayersErrChan      map[int]chan error
-	PlayersAction       map[int]chan *mahjong.Call
-	PlayersEvents       map[int]chan mahjong.Events
-	PlayersValidActions map[int]chan mahjong.Calls
+	//PlayersErrChan      map[int]chan error
+	PlayersAction map[int]chan *mahjong.Call
+	//PlayersEvents       map[int]chan mahjong.Events
+	//PlayersValidActions map[int]chan mahjong.Calls
+	PlayersEventsChan map[int]chan *player.GameEventChannel
 }
 
 func NewGameRoom(game *mahjong.Game, seatOrder []int) *GameRoom {
@@ -26,13 +28,11 @@ func NewGameRoom(game *mahjong.Game, seatOrder []int) *GameRoom {
 		players[seat] = mahjong.NewMahjongPlayer()
 	}
 	return &GameRoom{
-		game:                game,
-		players:             players,
-		seat2Order:          seat2Order,
-		PlayersErrChan:      make(map[int]chan error, 4),
-		PlayersAction:       make(map[int]chan *mahjong.Call, 4),
-		PlayersEvents:       make(map[int]chan mahjong.Events, 4),
-		PlayersValidActions: make(map[int]chan mahjong.Calls, 4),
+		game:              game,
+		players:           players,
+		seat2Order:        seat2Order,
+		PlayersAction:     make(map[int]chan *mahjong.Call, 4),
+		PlayersEventsChan: make(map[int]chan *player.GameEventChannel, 4),
 	}
 }
 
@@ -40,22 +40,16 @@ func (r *GameRoom) GetPlayer(seat int) *mahjong.Player {
 	return r.players[seat]
 }
 
-func (r *GameRoom) RegisterSeat(seat int, action chan *mahjong.Call) (ech chan mahjong.Events, vch chan mahjong.Calls, errCh chan error) {
+func (r *GameRoom) RegisterSeat(seat int, action chan *mahjong.Call) chan *player.GameEventChannel {
 	r.PlayersAction[seat] = action
 
-	ech = make(chan mahjong.Events, 20)
-	r.PlayersEvents[seat] = ech
-
-	vch = make(chan mahjong.Calls, 1)
-	r.PlayersValidActions[seat] = vch
-
-	errCh = make(chan error, 1)
-	r.PlayersErrChan[seat] = errCh
-	return ech, vch, errCh
+	eventChan := make(chan *player.GameEventChannel)
+	r.PlayersEventsChan[seat] = eventChan
+	return eventChan
 }
 
 func (r *GameRoom) CheckRegister() bool {
-	if len(r.PlayersAction) != 4 || len(r.PlayersEvents) != 4 || len(r.PlayersValidActions) != 4 || len(r.PlayersErrChan) != 4 {
+	if len(r.PlayersAction) != 4 || len(r.PlayersEventsChan) != 4 {
 		return false
 	}
 	for _, v := range r.PlayersAction {
@@ -67,16 +61,20 @@ func (r *GameRoom) CheckRegister() bool {
 }
 
 func (r *GameRoom) sendEvent(seat int, events mahjong.Events) {
-	r.PlayersEvents[seat] <- events
+	r.PlayersEventsChan[seat] <- &player.GameEventChannel{
+		Events: events,
+	}
 }
 
 func (r *GameRoom) sendValidActions(seat int, actions mahjong.Calls) {
-	r.PlayersValidActions[seat] <- actions
+	r.PlayersEventsChan[seat] <- &player.GameEventChannel{
+		ValidActions: actions,
+	}
 }
 
 func (r *GameRoom) getSeatByWind(wind mahjong.Wind) int {
-	for seat, player := range r.players {
-		if player.Wind == wind {
+	for seat, p := range r.players {
+		if p.Wind == wind {
 			return seat
 		}
 	}
@@ -103,7 +101,7 @@ func (r *GameRoom) StartGame() {
 				// send end error
 				for seat := range r.seat2Order {
 					select {
-					case r.PlayersErrChan[seat] <- errs.ErrGameEndUnexpect:
+					case r.PlayersEventsChan[seat] <- &player.GameEventChannel{Err: errs.ErrGameEndUnexpect}:
 					default:
 						global.Log.Warnln("send end error failed")
 					}
@@ -155,7 +153,7 @@ func (r *GameRoom) StartGame() {
 
 		// send end error
 		for seat := range r.seat2Order {
-			r.PlayersErrChan[seat] <- errs.ErrGameEnd
+			r.PlayersEventsChan[seat] <- &player.GameEventChannel{Err: errs.ErrGameEnd}
 		}
 	}()
 }

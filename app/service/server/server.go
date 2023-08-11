@@ -376,11 +376,9 @@ func (i ImplServer) StartStream(ctx context.Context, request *StreamRequest) (re
 	if !ok {
 		return nil, errs.ErrRoomNotFound
 	}
-	ech, vch, errChan := r.StartGameStream(p, request.Call)
+	ech := r.StartGameStream(p, request.Call)
 	return &StreamReply{
-		Events:     ech,
-		ValidCalls: vch,
-		Error:      errChan,
+		Events: ech,
 	}, nil
 }
 

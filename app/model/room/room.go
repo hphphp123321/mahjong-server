@@ -218,8 +218,8 @@ func (r *Room) StartGame(rule *mahjong.Rule, seed int64) ([]int, error) {
 			continue
 		} else {
 			actionChan := player.InitRobotStream()
-			ech, vch, errCh := r.gameRoom.RegisterSeat(seat, actionChan)
-			player.StartRobotStream(robot, ech, vch, actionChan, errCh)
+			ech := r.gameRoom.RegisterSeat(seat, actionChan)
+			player.StartRobotStream(robot, ech, actionChan)
 		}
 	}
 
@@ -228,7 +228,7 @@ func (r *Room) StartGame(rule *mahjong.Rule, seed int64) ([]int, error) {
 	return seatsToShuffle, nil
 }
 
-func (r *Room) StartGameStream(p *player.Player, action chan *mahjong.Call) (event chan mahjong.Events, validActions chan mahjong.Calls, error chan error) {
+func (r *Room) StartGameStream(p *player.Player, action chan *mahjong.Call) chan *player.GameEventChannel {
 	return r.gameRoom.RegisterSeat(p.Seat, action)
 }
 

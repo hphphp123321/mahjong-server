@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/hphphp123321/mahjong-go/mahjong"
+	"github.com/hphphp123321/mahjong-server/app/model/player"
 	"github.com/hphphp123321/mahjong-server/app/model/room"
 )
 
@@ -91,7 +92,5 @@ type StreamRequest struct {
 }
 
 type StreamReply struct {
-	Events     chan mahjong.Events
-	ValidCalls chan mahjong.Calls
-	Error      chan error
+	Events chan *player.GameEventChannel
 }

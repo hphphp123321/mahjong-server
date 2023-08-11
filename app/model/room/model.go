@@ -1,6 +1,8 @@
 package room
 
-import "github.com/hphphp123321/mahjong-server/app/model/player"
+import (
+	"github.com/hphphp123321/mahjong-server/app/model/player"
+)
 
 type Info struct {
 	ID          string
