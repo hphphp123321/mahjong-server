@@ -95,11 +95,11 @@ func ToMahjongTileClasses(tcs []pb.TileClass) mahjong.TileClasses {
 }
 
 func ToPbWindRound(w mahjong.WindRound) pb.WindRound {
-	return pb.WindRound(w + 1)
+	return pb.WindRound(w)
 }
 
 func ToMahjongWindRound(w pb.WindRound) mahjong.WindRound {
-	return mahjong.WindRound(w - 1)
+	return mahjong.WindRound(w)
 }
 
 func ToPbWind(w mahjong.Wind) pb.Wind {
