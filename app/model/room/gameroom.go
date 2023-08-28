@@ -145,9 +145,12 @@ func (r *GameRoom) StartGame() {
 			for wind, calls := range posCalls {
 				r.sendValidActions(r.getSeatByWind(wind), calls)
 			}
+
 			// recv action
-			for wind := range posCalls {
-				posCall[wind] = <-r.PlayersAction[r.getSeatByWind(wind)]
+			for wind, playerCalls := range posCalls {
+				playerCall := <-r.PlayersAction[r.getSeatByWind(wind)]
+
+				posCall[wind] = playerCall
 			}
 
 			// step
