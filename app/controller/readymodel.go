@@ -106,7 +106,7 @@ func ToPbReadyChatReply(in *pb.ReadyRequest, playerName string, seat int) *pb.Re
 func ToServerStartGameRequest(in *pb.ReadyRequest) *server.StartGameRequest {
 	return &server.StartGameRequest{
 		Rule: ToMahjongGameRule(in.GetStartGame().GetGameRule()),
-		Seed: in.GetStartGame().GetSeed(),
+		Mode: int(in.GetStartGame().GetMode()),
 	}
 }
 

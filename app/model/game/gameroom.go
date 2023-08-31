@@ -1,4 +1,4 @@
-package room
+package game
 
 import (
 	"github.com/hphphp123321/mahjong-go/mahjong"
@@ -13,10 +13,7 @@ type GameRoom struct {
 	players    map[int]*mahjong.Player // int: Seat
 	seat2Order map[int]int             // seat -> order
 
-	//PlayersErrChan      map[int]chan error
-	PlayersAction map[int]chan *mahjong.Call
-	//PlayersEvents       map[int]chan mahjong.Events
-	//PlayersValidActions map[int]chan mahjong.Calls
+	PlayersAction     map[int]chan *mahjong.Call
 	PlayersEventsChan map[int]chan *player.GameEventChannel
 }
 
@@ -85,11 +82,11 @@ func (r *GameRoom) getWindBySeat(seat int) mahjong.Wind {
 	return r.players[seat].Wind
 }
 
-func (r *GameRoom) getBoardStateBySeat(seat int) *mahjong.BoardState {
+func (r *GameRoom) GetBoardStateBySeat(seat int) *mahjong.BoardState {
 	return r.game.GetPosBoardState(r.getWindBySeat(seat), nil)
 }
 
-func (r *GameRoom) StartGame() {
+func (r *GameRoom) StartGame(mode int, cancelReady func()) {
 	go func() {
 		for !r.CheckRegister() {
 			time.Sleep(time.Millisecond * 100)
@@ -111,13 +108,13 @@ func (r *GameRoom) StartGame() {
 
 		// start game
 		var flag = mahjong.EndTypeNone
-		var players []*mahjong.Player
-		for seat, _ := range r.seat2Order {
-			players = append(players, r.players[seat])
+		var players = []*mahjong.Player{nil, nil, nil, nil}
+		for seat, order := range r.seat2Order {
+			players[order] = r.players[seat]
 		}
 		playersEventIdx := make(map[mahjong.Wind]int, 4)
 
-		posCalls := r.game.Reset(players, nil)
+		posCalls := r.game.Reset(players, GetTestTiles(mode))
 		posCall := make(map[mahjong.Wind]*mahjong.Call, 4)
 
 		for {
@@ -148,8 +145,11 @@ func (r *GameRoom) StartGame() {
 
 			// recv action
 			for wind, playerCalls := range posCalls {
-				playerCall := <-r.PlayersAction[r.getSeatByWind(wind)]
-
+				var playerCall *mahjong.Call
+				playerCall = <-r.PlayersAction[r.getSeatByWind(wind)]
+				for !playerCalls.Contains(playerCall) {
+					playerCall = <-r.PlayersAction[r.getSeatByWind(wind)]
+				}
 				posCall[wind] = playerCall
 			}
 
@@ -163,5 +163,7 @@ func (r *GameRoom) StartGame() {
 		for seat := range r.seat2Order {
 			r.PlayersEventsChan[seat] <- &player.GameEventChannel{Err: errs.ErrGameEnd}
 		}
+
+		cancelReady()
 	}()
 }

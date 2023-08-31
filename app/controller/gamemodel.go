@@ -402,3 +402,11 @@ func ToMahjongTenpaiInfos(infos map[int32]*pb.TenpaiInfo) mahjong.TenpaiInfos {
 	}
 	return m
 }
+
+func ToPbRyuuKyoKuReason(reason mahjong.RyuuKyokuReason) pb.RyuuKyoKuReason {
+	return pb.RyuuKyoKuReason(reason - 1)
+}
+
+func ToMahjongRyuuKyoKuReason(reason pb.RyuuKyoKuReason) mahjong.RyuuKyokuReason {
+	return mahjong.RyuuKyokuReason(reason + 1)
+}

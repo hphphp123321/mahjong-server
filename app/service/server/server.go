@@ -355,7 +355,7 @@ func (i ImplServer) StartGame(ctx context.Context, request *StartGameRequest) (r
 	if p.Seat != r.OwnerSeat {
 		return nil, errs.ErrPlayerNotOwner
 	}
-	seatsOrder, err := r.StartGame(request.Rule, request.Seed)
+	seatsOrder, err := r.StartGame(request.Rule, request.Mode)
 	if err != nil {
 		return nil, err
 	}

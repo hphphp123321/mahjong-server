@@ -135,7 +135,7 @@ func ToPbEventRyuuKyoku(event *mahjong.EventRyuuKyoku) *pb.EventRyuuKyoKu {
 	return &pb.EventRyuuKyoKu{
 		Who:       ToPbWind(event.Who),
 		HandTiles: ToPbTiles(event.HandTiles),
-		Reason:    pb.RyuuKyoKuReason(event.Reason),
+		Reason:    ToPbRyuuKyoKuReason(event.Reason),
 	}
 }
 
@@ -377,7 +377,7 @@ func ToMahjongEventRyuuKyoku(event *pb.EventRyuuKyoKu) *mahjong.EventRyuuKyoku {
 	return &mahjong.EventRyuuKyoku{
 		Who:       ToMahjongWind(event.Who),
 		HandTiles: ToMahjongTiles(event.HandTiles),
-		Reason:    mahjong.RyuuKyokuReason(event.Reason),
+		Reason:    ToMahjongRyuuKyoKuReason(event.Reason),
 	}
 }
 

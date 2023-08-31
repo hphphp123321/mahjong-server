@@ -119,7 +119,7 @@ func handleRefreshRoom(ctx context.Context, server *MahjongServer, in *pb.ReadyR
 		return nil, fmt.Errorf("handle refresh room: %s", err)
 	}
 	reply = &pb.ReadyReply{
-		Message: "",
+		Message: fmt.Sprintln("refresh room success, room info: ", info.String()),
 		Reply:   &pb.ReadyReply_RefreshRoomReply{RefreshRoomReply: MapToRoomInfo(info)},
 	}
 	if err := SendBackReady(ctx, server, reply); err != nil {

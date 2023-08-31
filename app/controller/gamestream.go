@@ -71,10 +71,19 @@ func StartGameSendStream(ctx context.Context, stream pb.Mahjong_GameServer, chan
 
 	done = make(chan error)
 	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				done <- nil
+				return
+			}
+		}()
+
 		for {
 			select {
 			case <-ctx.Done():
 				global.Log.Infof("send game stream done")
+				done <- nil
+				return
 			case ge := <-channels.Events:
 				if ge.Events != nil {
 					if err := SendEvents(stream, ge.Events); err != nil {

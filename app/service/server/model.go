@@ -80,7 +80,7 @@ type ListPlayerIDsReply struct {
 
 type StartGameRequest struct {
 	Rule *mahjong.Rule
-	Seed int64
+	Mode int
 }
 
 type StartGameReply struct {

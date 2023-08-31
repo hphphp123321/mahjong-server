@@ -134,7 +134,6 @@ func (m MahjongServer) Game(stream pb.Mahjong_GameServer) error {
 	}
 	sendDone := StartGameSendStream(ctx, stream, r)
 	select {
-	case <-ctx.Done():
 	case err = <-recvDone:
 		if err != nil {
 			global.Log.Warnln("game recv stream done: ", err)
@@ -143,8 +142,8 @@ func (m MahjongServer) Game(stream pb.Mahjong_GameServer) error {
 		if err != nil {
 			global.Log.Warnln("game send stream done: ", err)
 		}
+		close(r.Events)
 	}
 	close(actionChan)
-	close(r.Events)
 	return RemoveGameStream(ctx, &m)
 }

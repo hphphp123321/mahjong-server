@@ -4,6 +4,7 @@ import (
 	"github.com/hphphp123321/mahjong-go/mahjong"
 	"github.com/hphphp123321/mahjong-server/app/errs"
 	"github.com/hphphp123321/mahjong-server/app/global"
+	"github.com/hphphp123321/mahjong-server/app/model/game"
 	"github.com/hphphp123321/mahjong-server/app/model/player"
 	"math/rand"
 	"sync"
@@ -16,7 +17,7 @@ type Room struct {
 
 	OwnerSeat int
 
-	gameRoom *GameRoom
+	gameRoom *game.GameRoom
 	mu       sync.RWMutex
 }
 
@@ -193,7 +194,7 @@ func (r *Room) changeOwner() {
 	return
 }
 
-func (r *Room) StartGame(rule *mahjong.Rule, seed int64) ([]int, error) {
+func (r *Room) StartGame(rule *mahjong.Rule, mode int) ([]int, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if len(r.Players) != 4 {
@@ -202,12 +203,19 @@ func (r *Room) StartGame(rule *mahjong.Rule, seed int64) ([]int, error) {
 	if !r.CheckAllReady() {
 		return nil, errs.ErrRoomNotAllReady
 	}
-	game := mahjong.NewMahjongGame(seed, rule)
+
+	var seed int64
 	seatsToShuffle := []int{0, 1, 2, 3}
-	rand.Shuffle(4, func(i, j int) {
-		seatsToShuffle[i], seatsToShuffle[j] = seatsToShuffle[j], seatsToShuffle[i]
-	})
-	r.gameRoom = NewGameRoom(game, seatsToShuffle)
+	if mode >= 0 {
+		seed = rand.Int63()
+		rand.Shuffle(4, func(i, j int) {
+			seatsToShuffle[i], seatsToShuffle[j] = seatsToShuffle[j], seatsToShuffle[i]
+		})
+	}
+
+	// Create game
+	g := mahjong.NewMahjongGame(seed, rule)
+	r.gameRoom = game.NewGameRoom(g, seatsToShuffle)
 
 	// Start robot
 	for seat, p := range r.Players {
@@ -224,7 +232,7 @@ func (r *Room) StartGame(rule *mahjong.Rule, seed int64) ([]int, error) {
 	}
 
 	// Start Game
-	r.gameRoom.StartGame()
+	r.gameRoom.StartGame(mode, r.CancelHumanPlayersReady)
 	return seatsToShuffle, nil
 }
 
@@ -239,5 +247,13 @@ func (r *Room) GetBoardState(p *player.Player) (*mahjong.BoardState, error) {
 	if _, ok := r.Players[p.Seat]; !ok {
 		return nil, errs.ErrPlayerNotInRoom
 	}
-	return r.gameRoom.getBoardStateBySeat(p.Seat), nil
+	return r.gameRoom.GetBoardStateBySeat(p.Seat), nil
+}
+
+func (r *Room) CancelHumanPlayersReady() {
+	for _, p := range r.Players {
+		if p.ID != "" {
+			p.Ready = false
+		}
+	}
 }
