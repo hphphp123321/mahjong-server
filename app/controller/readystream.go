@@ -242,7 +242,11 @@ func handleStartGame(ctx context.Context, server *MahjongServer, in *pb.ReadyReq
 
 func sendChan(replyChan chan<- *pb.ReadyReply, done chan<- error, reply *pb.ReadyReply, err error) {
 	if err != nil {
-		done <- err
+		//done <- err
+		replyChan <- &pb.ReadyReply{
+			Message: fmt.Sprintln("error: ", err),
+			Reply:   nil,
+		}
 	} else if reply != nil {
 		replyChan <- reply
 	}

@@ -162,7 +162,7 @@ message CancelReadyReply{
 
 message AddRobotReply{
   int32 robotSeat = 1;
-  string robotType = 2;
+  string robotName = 2;
 }
 
 message PlayerJoinReply{

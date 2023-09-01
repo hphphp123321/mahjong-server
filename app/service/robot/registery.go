@@ -1,6 +1,9 @@
 package robot
 
-import "math/rand"
+import (
+	"math/rand"
+	"strings"
+)
 
 type Registry struct {
 	robots map[string]Robot
@@ -20,7 +23,11 @@ func (r *Registry) Unregister(robotType string) {
 	delete(r.robots, robotType)
 }
 
-func (r *Registry) GetRobot(robotType string) (robot Robot, ok bool) {
+func (r *Registry) GetRobot(robotName string) (robot Robot, ok bool) {
+	var robotType string = robotName
+	if strings.Contains(robotName, "(com)") {
+		robotType = strings.Split(robotName, "(com)")[0]
+	}
 	robot, ok = r.robots[robotType]
 	return robot, ok
 }

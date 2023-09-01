@@ -7,6 +7,7 @@ import (
 	"github.com/hphphp123321/mahjong-server/app/model/game"
 	"github.com/hphphp123321/mahjong-server/app/model/player"
 	"math/rand"
+	"strconv"
 	"sync"
 )
 
@@ -83,21 +84,23 @@ func (r *Room) Join(p *player.Player) error {
 	return nil
 }
 
-func (r *Room) AddRobot(robotType string, seat int) error {
+func (r *Room) AddRobot(robotType string, seat int) (string, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if len(r.Players) == 4 {
-		return errs.ErrRoomFull
+		return "", errs.ErrRoomFull
 	}
 	if _, ok := r.Players[seat]; ok {
-		return errs.ErrPlayerSeatOccupied
+		return "", errs.ErrPlayerSeatOccupied
 	}
-	p := player.NewRobot(robotType)
+
+	var robotName = robotType + "(com)" + strconv.Itoa(seat)
+	p := player.NewRobot(robotName)
 	if err := p.JoinRoom(r.ID, seat); err != nil {
-		return err
+		return "", err
 	}
 	r.Players[seat] = p
-	return nil
+	return robotName, nil
 }
 
 func (r *Room) IsFull() bool {

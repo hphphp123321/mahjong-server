@@ -273,12 +273,13 @@ func (i ImplServer) AddRobot(ctx context.Context, request *AddRobotRequest) (rep
 	if p.Seat != r.OwnerSeat {
 		return nil, errs.ErrPlayerNotOwner
 	}
-	if err := r.AddRobot(request.RobotType, request.RobotSeat); err != nil {
+	robotName, err := r.AddRobot(request.RobotType, request.RobotSeat)
+	if err != nil {
 		return nil, err
 	}
 	return &AddRobotReply{
 		RobotSeat: request.RobotSeat,
-		RobotType: request.RobotType,
+		RobotName: robotName,
 	}, nil
 }
 

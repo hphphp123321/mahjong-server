@@ -74,6 +74,7 @@ func StartGameSendStream(ctx context.Context, stream pb.Mahjong_GameServer, chan
 		defer func() {
 			if err := recover(); err != nil {
 				done <- nil
+				close(channels.Events)
 				return
 			}
 		}()
@@ -83,7 +84,7 @@ func StartGameSendStream(ctx context.Context, stream pb.Mahjong_GameServer, chan
 			case <-ctx.Done():
 				global.Log.Infof("send game stream done")
 				done <- nil
-				return
+				goto TagBreak
 			case ge := <-channels.Events:
 				if ge.Events != nil {
 					if err := SendEvents(stream, ge.Events); err != nil {
@@ -95,11 +96,11 @@ func StartGameSendStream(ctx context.Context, stream pb.Mahjong_GameServer, chan
 							global.Log.Warnf("send game end error: %v", ge.Err)
 						}
 						done <- nil
-						return
+						goto TagBreak
 					} else {
 						global.Log.Warnf("send game stream error: %v", ge.Err)
 						done <- nil
-						return
+						goto TagBreak
 					}
 				} else if ge.ValidActions != nil {
 					if err := SendValidActions(stream, ge.ValidActions); err != nil {
@@ -108,6 +109,8 @@ func StartGameSendStream(ctx context.Context, stream pb.Mahjong_GameServer, chan
 				}
 			}
 		}
+	TagBreak:
+		close(channels.Events)
 	}()
 	return done
 }

@@ -83,11 +83,11 @@ func ToServerAddRobotRequest(r *pb.ReadyRequest) *server.AddRobotRequest {
 
 func ToPbAddRobotReply(r *server.AddRobotReply) *pb.ReadyReply {
 	return &pb.ReadyReply{
-		Message: AddRobotMsg(r.RobotType),
+		Message: AddRobotMsg(r.RobotName),
 		Reply: &pb.ReadyReply_AddRobot{
 			AddRobot: &pb.AddRobotReply{
 				RobotSeat: int32(r.RobotSeat),
-				RobotType: r.RobotType,
+				RobotName: r.RobotName,
 			},
 		},
 	}

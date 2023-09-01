@@ -47,7 +47,7 @@ type AddRobotRequest struct {
 
 type AddRobotReply struct {
 	RobotSeat int
-	RobotType string
+	RobotName string
 }
 
 type RemovePlayerRequest struct {

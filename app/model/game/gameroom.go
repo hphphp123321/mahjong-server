@@ -100,6 +100,7 @@ func (r *GameRoom) StartGame(mode int, cancelReady func()) {
 					select {
 					case r.PlayersEventsChan[seat] <- &player.GameEventChannel{Err: errs.ErrGameEndUnexpect}:
 					default:
+						// player leave in game
 						global.Log.Warnln("send end error failed")
 					}
 				}
