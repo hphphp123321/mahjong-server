@@ -2,6 +2,7 @@ package global
 
 import (
 	"github.com/hphphp123321/mahjong-server/app/component/config"
+	"github.com/hphphp123321/mahjong-server/app/service/robot"
 	"go.uber.org/zap"
 )
 
@@ -14,4 +15,7 @@ var (
 
 	// Log [ZapLoggerLoader]zap-logger实例
 	Log *zap.SugaredLogger
+
+	// RobotRegistry [RobotLoader]机器人注册表
+	RobotRegistry *robot.Registry = robot.NewRegistry()
 )

@@ -5,6 +5,9 @@ import (
 	"math/rand"
 )
 
+// 确保实现了Robot接口
+var _ Robot = (*Simple)(nil)
+
 type Simple struct {
 }
 

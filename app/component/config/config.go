@@ -5,6 +5,13 @@ type App struct {
 	Mode string `yaml:"mode"`
 }
 
+type Openai struct {
+	Key      string `yaml:"key"`
+	Model    string `yaml:"model"`
+	Lang     string `yaml:"lang"`
+	ProxyUrl string `yaml:"proxyUrl"`
+}
+
 type LogConfig struct {
 	Level      string `yaml:"level"` // info error warn debug
 	Filename   string `yaml:"filename"`
@@ -26,6 +33,7 @@ type Server struct {
 // Config is the configuration of the application.
 type Config struct {
 	App       *App       `yaml:"app"`
+	Openai    *Openai    `yaml:"openai"`
 	LogConfig *LogConfig `yaml:"log-config"`
 	Server    *Server    `yaml:"server"`
 }
