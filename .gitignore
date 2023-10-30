@@ -26,6 +26,9 @@ gen
 # Dependency directories
 vendor/
 
+# Config
+config/
+
 # Go workspace file
 go.work
 
