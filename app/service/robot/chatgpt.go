@@ -75,6 +75,7 @@ func (r *ChatGPT) chatgptChooseAction(boardState *mahjong.BoardState) (actionIdx
 		},
 	)
 	if err != nil {
+		fmt.Println(err)
 		return rand.Intn(len(boardState.ValidActions))
 	}
 	fmt.Println(resp.Choices[0].Message.Content)
@@ -85,17 +86,17 @@ func (r *ChatGPT) chatgptChooseAction(boardState *mahjong.BoardState) (actionIdx
 }
 
 func (r *ChatGPT) getEnPrompt(boardState *mahjong.BoardState) string {
-	var background = "Background: You're a Japanese Riichi mahjong pro, and you're playing one game;"
-	var motivation = "Goal: You need to choose the optimal play based on the current situation;"
+	var background = "Background: You're a Japanese Riichi mahjong pro, and you're playing one game.\n"
+	var motivation = "Goal: You need to choose the optimal play based on the current situation\n"
 	var board = fmt.Sprintf("Situation: Your self wind is %s, the wind round is %s(East2 means \"东二局\"), "+
 		"the num of honba is %d, the num of riichi sticks is %d, the remaining tiles in the wall is %d, "+
-		"the dora indicators are %s, the turn position(if position is not your self wind means you can call chi,pon,gang etc) is %s"+
+		"the dora indicators are %s, the turn position(if position is not your self wind means you can call chi,pon,gang etc) is %s, "+
 		"your hand tiles are %s;\n"+
-		"the dealer/east's discarded tiles are %s, points is %d, riichi status is %t, melds are %s (none means he hasnot call chi pon or kan);\n"+
-		"the south's discarded tiles are %s, points is %d, riichi status is %t, melds are %s ;\n"+
-		"the west's discarded tiles are %s, points is %d, riichi status is %t, melds are %s ;\n"+
-		"the north's discarded tiles are %s, points is %d, riichi status is %t, melds are %s ;\n\n"+
-		"now it's your turn to choose one of the valid actions below:",
+		"the dealer/east's discarded tiles are %s, points is %d, riichi status is %t, melds are %s (none means he hasnot call chi pon or kan)\n"+
+		"the south's discarded tiles are %s, points is %d, riichi status is %t, melds are %s\n"+
+		"the west's discarded tiles are %s, points is %d, riichi status is %t, melds are %s\n"+
+		"the north's discarded tiles are %s, points is %d, riichi status is %t, melds are %s\n\n"+
+		"now it's your turn to choose one of the valid actions below:\n",
 
 		boardState.PlayerWind.String(), boardState.WindRound.String(),
 		boardState.NumHonba, boardState.NumRiichi, boardState.NumRemainTiles,

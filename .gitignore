@@ -28,6 +28,8 @@ vendor/
 
 # Config
 config/
+*.yaml
+
 
 # Go workspace file
 go.work
