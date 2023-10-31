@@ -3,11 +3,13 @@ package robot
 import (
 	"context"
 	"fmt"
-	"github.com/hphphp123321/mahjong-go/mahjong"
-	"github.com/sashabaranov/go-openai"
 	"math/rand"
 	"net/http"
 	"net/url"
+	"strconv"
+
+	"github.com/hphphp123321/mahjong-go/mahjong"
+	"github.com/sashabaranov/go-openai"
 )
 
 // 确保实现了Robot接口
@@ -45,11 +47,20 @@ func (r *ChatGPT) chatgptChooseAction(boardState *mahjong.BoardState) (actionIdx
 		var proxy, err = url.Parse(r.ProxyUrl)
 		if err != nil {
 			fmt.Println(err)
-			return rand.Intn(len(boardState.ValidActions))
+			transport = &http.Transport{
+				// 不设置代理
+				Proxy: nil,
+			}
+		} else {
+			transport = &http.Transport{
+				// 设置代理
+				Proxy: http.ProxyURL(proxy),
+			}
 		}
+	} else {
 		transport = &http.Transport{
-			// 设置代理
-			Proxy: http.ProxyURL(proxy),
+			// 不设置代理
+			Proxy: nil,
 		}
 	}
 
@@ -78,11 +89,26 @@ func (r *ChatGPT) chatgptChooseAction(boardState *mahjong.BoardState) (actionIdx
 		fmt.Println(err)
 		return rand.Intn(len(boardState.ValidActions))
 	}
-	fmt.Println(resp.Choices[0].Message.Content)
+	var content = resp.Choices[0].Message.Content
+	var choice int
+	var choiceS string
+	for _, b := range content {
+		if b != ':' {
+			choiceS += string(b)
+		} else {
+			break
+		}
+	}
+	choice, err = strconv.Atoi(choiceS)
+	if err != nil {
+		fmt.Println(err)
+		return rand.Intn(len(boardState.ValidActions))
+	}
+	fmt.Println("Choice: " + boardState.ValidActions[choice].String())
 	fmt.Println("end chatgpt request")
 	fmt.Println()
 
-	return rand.Intn(len(boardState.ValidActions))
+	return choice
 }
 
 func (r *ChatGPT) getEnPrompt(boardState *mahjong.BoardState) string {
@@ -90,12 +116,12 @@ func (r *ChatGPT) getEnPrompt(boardState *mahjong.BoardState) string {
 	var motivation = "Goal: You need to choose the optimal play based on the current situation\n"
 	var board = fmt.Sprintf("Situation: Your self wind is %s, the wind round is %s(East2 means \"东二局\"), "+
 		"the num of honba is %d, the num of riichi sticks is %d, the remaining tiles in the wall is %d, "+
-		"the dora indicators are %s, the turn position(if position is not your self wind means you can call chi,pon,gang etc) is %s, "+
-		"your hand tiles are %s;\n"+
-		"the dealer/east's discarded tiles are %s, points is %d, riichi status is %t, melds are %s (none means he hasnot call chi pon or kan)\n"+
-		"the south's discarded tiles are %s, points is %d, riichi status is %t, melds are %s\n"+
-		"the west's discarded tiles are %s, points is %d, riichi status is %t, melds are %s\n"+
-		"the north's discarded tiles are %s, points is %d, riichi status is %t, melds are %s\n\n"+
+		"the dora indicators are [%s], the turn position(if position is not your self wind means you can call chi,pon,gang etc) is %s, "+
+		"your hand tiles are [%s];\n"+
+		"the dealer/east's discarded tiles are [%s], points is %d, riichi status is %t, melds are [%s] (none means he hasnot call chi pon or kan)\n"+
+		"the south's discarded tiles are [%s], points is %d, riichi status is %t, melds are [%s]\n"+
+		"the west's discarded tiles are [%s], points is %d, riichi status is %t, melds are [%s]\n"+
+		"the north's discarded tiles are [%s], points is %d, riichi status is %t, melds are [%s]\n\n"+
 		"now it's your turn to choose one of the valid actions below:\n",
 
 		boardState.PlayerWind.String(), boardState.WindRound.String(),
@@ -120,7 +146,7 @@ func (r *ChatGPT) getEnPrompt(boardState *mahjong.BoardState) string {
 	for i, call := range boardState.ValidActions {
 		validActions += fmt.Sprintf("%d: %s\n", i, call.String())
 	}
-	var require = "Requirements: according to the legal action number, output the corresponding number, only reply one number of all choices, such as \"2\", DO NOT ANSWER OTHER EXCEPT NUMBER;"
+	var require = "Requirements: according to the legal action number, output the corresponding number, only reply one number of all choices, such as \"2\", DO NOT ANSWER OTHER WORDS EXCEPT NUMBER!"
 
 	var prompt = background + motivation + board + validActions + require
 	return prompt
