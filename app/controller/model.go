@@ -3,7 +3,7 @@ package controller
 import (
 	"github.com/hphphp123321/go-common"
 	"github.com/hphphp123321/mahjong-go/mahjong"
-	pb "github.com/hphphp123321/mahjong-server/app/api/v1"
+	pb "github.com/hphphp123321/mahjong-server/app/api/v1/mahjong"
 	"github.com/hphphp123321/mahjong-server/app/model/player"
 	"github.com/hphphp123321/mahjong-server/app/model/room"
 	"github.com/hphphp123321/mahjong-server/app/service/server"

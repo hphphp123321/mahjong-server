@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/hphphp123321/mahjong-server/app/api/middleware/interceptor/logger"
-	pb "github.com/hphphp123321/mahjong-server/app/api/v1"
+	pb "github.com/hphphp123321/mahjong-server/app/api/v1/mahjong"
 	"github.com/hphphp123321/mahjong-server/app/controller"
 	"github.com/hphphp123321/mahjong-server/app/global"
 	"github.com/hphphp123321/mahjong-server/app/service/server"

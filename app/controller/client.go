@@ -1,7 +1,7 @@
 package controller
 
 import (
-	pb "github.com/hphphp123321/mahjong-server/app/api/v1"
+	pb "github.com/hphphp123321/mahjong-server/app/api/v1/mahjong"
 	"time"
 )
 

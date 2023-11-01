@@ -2,13 +2,12 @@ package controller
 
 import (
 	"context"
-	pb "github.com/hphphp123321/mahjong-server/app/api/v1"
 	"github.com/hphphp123321/mahjong-server/app/global"
 	"github.com/hphphp123321/mahjong-server/app/service/server"
 )
 
 type MahjongServer struct {
-	pb.UnimplementedMahjongServer
+	mahjong.UnimplementedMahjongServer
 	s server.Server
 
 	clients map[string]*Client
@@ -21,11 +20,11 @@ func NewMahjongServer(s server.Server) *MahjongServer {
 	}
 }
 
-func (m MahjongServer) Ping(ctx context.Context, empty *pb.Empty) (*pb.Empty, error) {
-	return &pb.Empty{}, nil
+func (m MahjongServer) Ping(ctx context.Context, empty *mahjong.Empty) (*mahjong.Empty, error) {
+	return &mahjong.Empty{}, nil
 }
 
-func (m MahjongServer) Login(ctx context.Context, request *pb.LoginRequest) (*pb.LoginReply, error) {
+func (m MahjongServer) Login(ctx context.Context, request *mahjong.LoginRequest) (*mahjong.LoginReply, error) {
 	reply, err := m.s.Login(ctx, &server.LoginRequest{
 		Name: request.PlayerName,
 	})
@@ -39,7 +38,7 @@ func (m MahjongServer) Login(ctx context.Context, request *pb.LoginRequest) (*pb
 	return ToPbLoginReply(reply), nil
 }
 
-func (m MahjongServer) Logout(ctx context.Context, empty *pb.Empty) (*pb.LogoutReply, error) {
+func (m MahjongServer) Logout(ctx context.Context, empty *mahjong.Empty) (*mahjong.LogoutReply, error) {
 	id, err := m.s.GetID(ctx)
 	if err != nil {
 		return nil, err
@@ -56,7 +55,7 @@ func (m MahjongServer) Logout(ctx context.Context, empty *pb.Empty) (*pb.LogoutR
 	return ToPbLogoutReply(), nil
 }
 
-func (m MahjongServer) CreateRoom(ctx context.Context, request *pb.CreateRoomRequest) (*pb.CreateRoomReply, error) {
+func (m MahjongServer) CreateRoom(ctx context.Context, request *mahjong.CreateRoomRequest) (*mahjong.CreateRoomReply, error) {
 	reply, err := m.s.CreateRoom(ctx, &server.CreateRoomRequest{
 		RoomName: request.RoomName,
 	})
@@ -66,7 +65,7 @@ func (m MahjongServer) CreateRoom(ctx context.Context, request *pb.CreateRoomReq
 	return ToPbCreateRoomReply(reply), nil
 }
 
-func (m MahjongServer) JoinRoom(ctx context.Context, request *pb.JoinRoomRequest) (*pb.JoinRoomReply, error) {
+func (m MahjongServer) JoinRoom(ctx context.Context, request *mahjong.JoinRoomRequest) (*mahjong.JoinRoomReply, error) {
 	reply, err := m.s.JoinRoom(ctx, &server.JoinRoomRequest{
 		RoomID: request.RoomID,
 	})
@@ -79,7 +78,7 @@ func (m MahjongServer) JoinRoom(ctx context.Context, request *pb.JoinRoomRequest
 	return ToPbJoinRoomReply(reply), nil
 }
 
-func (m MahjongServer) ListRooms(ctx context.Context, request *pb.ListRoomsRequest) (*pb.ListRoomsReply, error) {
+func (m MahjongServer) ListRooms(ctx context.Context, request *mahjong.ListRoomsRequest) (*mahjong.ListRoomsReply, error) {
 	reply, err := m.s.ListRooms(ctx, &server.ListRoomsRequest{
 		RoomNameFilter: *request.RoomName,
 	})
@@ -89,7 +88,7 @@ func (m MahjongServer) ListRooms(ctx context.Context, request *pb.ListRoomsReque
 	return ToPbListRoomsReply(reply), nil
 }
 
-func (m MahjongServer) ListRobots(ctx context.Context, empty *pb.Empty) (*pb.ListRobotsReply, error) {
+func (m MahjongServer) ListRobots(ctx context.Context, empty *mahjong.Empty) (*mahjong.ListRobotsReply, error) {
 	reply, err := m.s.ListRobots(ctx)
 	if err != nil {
 		return nil, err
@@ -97,7 +96,7 @@ func (m MahjongServer) ListRobots(ctx context.Context, empty *pb.Empty) (*pb.Lis
 	return ToPbListRobotsReply(reply), nil
 }
 
-func (m MahjongServer) Ready(stream pb.Mahjong_ReadyServer) (err error) {
+func (m MahjongServer) Ready(stream mahjong.Mahjong_ReadyServer) (err error) {
 	ctx := stream.Context()
 	if err := AddReadyStream(ctx, stream, &m); err != nil {
 		return err
@@ -122,7 +121,7 @@ TagBreak:
 	return RemoveReadyStream(ctx, &m)
 }
 
-func (m MahjongServer) Game(stream pb.Mahjong_GameServer) error {
+func (m MahjongServer) Game(stream mahjong.Mahjong_GameServer) error {
 	ctx := stream.Context()
 	if err := AddGameStream(ctx, stream, &m); err != nil {
 		return err

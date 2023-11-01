@@ -20,6 +20,8 @@ service Mahjong {
 
   rpc ListRobots (Empty) returns (ListRobotsReply) {}
 
+  rpc RegisterRobot (RegisterRobotRequest) returns (RegisterRobotReply) {}
+
   rpc Ready (stream ReadyRequest) returns (stream ReadyReply) {}
 
   rpc Game (stream GameRequest) returns (stream GameReply) {}
@@ -88,6 +90,17 @@ message ListRoomsRequest {
 message ListRoomsReply {
   string message = 1;
   repeated RoomInfo rooms = 2;
+}
+
+message RegisterRobotRequest {
+  string robotType = 1;
+  string ipAddr = 2;
+  int32 port = 3;
+}
+
+message RegisterRobotReply {
+  string message = 1;
+  bool success = 2;
 }
 
 
@@ -394,6 +407,8 @@ message TenpaiResult {
   int32 RemainNum = 1;
   Result Result = 2;
 }
+
+// 枚举类型
 
 enum Limit {
   LimitNone = 0;

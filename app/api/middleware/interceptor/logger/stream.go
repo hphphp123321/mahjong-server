@@ -2,7 +2,7 @@ package logger
 
 import (
 	"fmt"
-	pb "github.com/hphphp123321/mahjong-server/app/api/v1"
+	pb "github.com/hphphp123321/mahjong-server/app/api/v1/mahjong"
 	"github.com/hphphp123321/mahjong-server/app/global"
 	"google.golang.org/grpc"
 )
