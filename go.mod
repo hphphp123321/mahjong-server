@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/google/uuid v1.3.0
 	github.com/hphphp123321/go-common v0.0.0-20230419113915-7ac9d9c533b6
-	github.com/hphphp123321/mahjong-go v0.0.0-20231030163430-c68088519d6d
+	github.com/hphphp123321/mahjong-go v0.0.0-20231101074904-04b1b2984779
 	github.com/sashabaranov/go-openai v1.16.0
 	github.com/sirupsen/logrus v1.9.0
 	go.uber.org/zap v1.24.0

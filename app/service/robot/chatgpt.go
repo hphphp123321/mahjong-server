@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/hphphp123321/mahjong-go/mahjong"
 	"github.com/sashabaranov/go-openai"
@@ -27,6 +28,9 @@ func (r *ChatGPT) GetRobotType() string {
 }
 
 func (r *ChatGPT) ChooseAction(events mahjong.Events, validActions mahjong.Calls) (actionIdx int) {
+	if len(validActions) == 1 {
+		return 0
+	}
 	var b = mahjong.NewBoardState()
 	b.DecodeEvents(events)
 	b.ValidActions = validActions
@@ -36,41 +40,77 @@ func (r *ChatGPT) ChooseAction(events mahjong.Events, validActions mahjong.Calls
 func (r *ChatGPT) chatgptChooseAction(boardState *mahjong.BoardState) (actionIdx int) {
 	var conf = openai.DefaultConfig(r.Key)
 
-	var transport *http.Transport = nil
+	var transport *http.Transport = http.DefaultTransport.(*http.Transport)
 
 	if r.ProxyUrl == "env" {
-		transport = &http.Transport{
-			// 设置环境代理
-			Proxy: http.ProxyFromEnvironment,
-		}
+		transport.Proxy = http.ProxyFromEnvironment // 设置环境代理
 	} else if r.ProxyUrl != "" {
 		var proxy, err = url.Parse(r.ProxyUrl)
 		if err != nil {
 			fmt.Println(err)
-			transport = &http.Transport{
-				// 不设置代理
-				Proxy: nil,
-			}
+			transport.Proxy = nil // 不设置代理
 		} else {
-			transport = &http.Transport{
-				// 设置代理
-				Proxy: http.ProxyURL(proxy),
-			}
+			transport.Proxy = http.ProxyURL(proxy)
 		}
 	} else {
-		transport = &http.Transport{
-			// 不设置代理
-			Proxy: nil,
-		}
+		transport.Proxy = nil // 不设置代理
 	}
 
 	conf.HTTPClient.Transport = transport
+	conf.HTTPClient.Timeout = 10 * time.Second
 	client := openai.NewClientWithConfig(conf)
 
 	var prompt = r.getEnPrompt(boardState)
 
 	fmt.Println()
 	fmt.Println("start chatgpt request")
+	fmt.Println(prompt)
+	resp, err := client.CreateChatCompletion(
+		context.Background(),
+		openai.ChatCompletionRequest{
+			Model:       r.Model,
+			Temperature: 0,
+			Messages: []openai.ChatCompletionMessage{
+				{
+					Role:    openai.ChatMessageRoleUser,
+					Content: prompt,
+				},
+			},
+		},
+	)
+	if err != nil {
+		return r.chatgptReChooseAction(client, prompt, boardState)
+	}
+	var content = resp.Choices[0].Message.Content
+	var choice int
+	var choiceS string
+	for _, b := range content {
+		if b != ':' {
+			choiceS += string(b)
+		} else {
+			break
+		}
+	}
+	choice, err = strconv.Atoi(choiceS)
+	if err != nil {
+		fmt.Println(err)
+		return r.chatgptReChooseAction(client, prompt, boardState)
+	}
+	if (choice < 0) || (choice >= len(boardState.ValidActions)) {
+		return r.chatgptReChooseAction(client, prompt, boardState)
+	}
+
+	fmt.Println("Choice: " + boardState.ValidActions[choice].String())
+	fmt.Println("end chatgpt request")
+	fmt.Println()
+
+	return choice
+}
+
+func (r *ChatGPT) chatgptReChooseAction(client *openai.Client, prompt string, boardState *mahjong.BoardState) (actionIdx int) {
+
+	fmt.Println()
+	fmt.Println("Restart chatgpt request")
 	fmt.Println(prompt)
 	resp, err := client.CreateChatCompletion(
 		context.Background(),
@@ -104,15 +144,19 @@ func (r *ChatGPT) chatgptChooseAction(boardState *mahjong.BoardState) (actionIdx
 		fmt.Println(err)
 		return rand.Intn(len(boardState.ValidActions))
 	}
+	if (choice < 0) || (choice >= len(boardState.ValidActions)) {
+		return rand.Intn(len(boardState.ValidActions))
+	}
 	fmt.Println("Choice: " + boardState.ValidActions[choice].String())
-	fmt.Println("end chatgpt request")
+	fmt.Println("End chatgpt request")
 	fmt.Println()
 
 	return choice
 }
 
 func (r *ChatGPT) getEnPrompt(boardState *mahjong.BoardState) string {
-	var background = "Background: You're a Japanese Riichi mahjong pro, and you're playing one game.\n"
+	var background = "Background: You're a Japanese Riichi mahjong pro, and you're playing one game. " +
+		"The format of tiles are like \"Man1\" which means 1m or 一万, \"Sou3\" means 3s or 三索, \"Ton, Nan, Shaa, Pei\" means 东, 南, 西, 北, \"Haku, Hatsu, Chun\" means 白, 发, 中\n"
 	var motivation = "Goal: You need to choose the optimal play based on the current situation\n"
 	var board = fmt.Sprintf("Situation: Your self wind is %s, the wind round is %s(East2 means \"东二局\"), "+
 		"the num of honba is %d, the num of riichi sticks is %d, the remaining tiles in the wall is %d, "+

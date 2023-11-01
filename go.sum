@@ -25,6 +25,8 @@ github.com/hphphp123321/mahjong-go v0.0.0-20231030161226-b5c7f6b21248 h1:BMvld/U
 github.com/hphphp123321/mahjong-go v0.0.0-20231030161226-b5c7f6b21248/go.mod h1:GZ0FWQylzTODmluIa+AJkDtKJC9cnn0ZxhEcacFcCY8=
 github.com/hphphp123321/mahjong-go v0.0.0-20231030163430-c68088519d6d h1:EFgOx5/HkBbZ5GLzZhJletvpiHKng+I1+zn1IepyWPc=
 github.com/hphphp123321/mahjong-go v0.0.0-20231030163430-c68088519d6d/go.mod h1:GZ0FWQylzTODmluIa+AJkDtKJC9cnn0ZxhEcacFcCY8=
+github.com/hphphp123321/mahjong-go v0.0.0-20231101074904-04b1b2984779 h1:TtfNlGakHHZaKPs/ILoYdATW89h6TK3EIFtXnHuYPrU=
+github.com/hphphp123321/mahjong-go v0.0.0-20231101074904-04b1b2984779/go.mod h1:GZ0FWQylzTODmluIa+AJkDtKJC9cnn0ZxhEcacFcCY8=
 github.com/pkg/errors v0.8.1 h1:iURUrRGxPUNPdy5/HRSm+Yj6okJ6UtLINN0Q9M4+h3I=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
