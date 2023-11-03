@@ -21,3 +21,7 @@ func JoinRoomMsg(roomName string) string {
 func ListRoomsMsg(roomNames []string) string {
 	return "List Room, Names: " + strings.Join(roomNames, ", ")
 }
+
+func RegisterRobotMsg(robotName string) string {
+	return "Register Robot, Name: " + robotName
+}

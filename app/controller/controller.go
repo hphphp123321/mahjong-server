@@ -2,7 +2,9 @@ package controller
 
 import (
 	"context"
+	mahjong "github.com/hphphp123321/mahjong-server/app/api/v1/mahjong"
 	"github.com/hphphp123321/mahjong-server/app/global"
+	"github.com/hphphp123321/mahjong-server/app/service/robot"
 	"github.com/hphphp123321/mahjong-server/app/service/server"
 )
 
@@ -94,6 +96,19 @@ func (m MahjongServer) ListRobots(ctx context.Context, empty *mahjong.Empty) (*m
 		return nil, err
 	}
 	return ToPbListRobotsReply(reply), nil
+}
+
+func (m MahjongServer) RegisterRobot(ctx context.Context, request *mahjong.RegisterRobotRequest) (*mahjong.RegisterRobotReply, error) {
+	reply, err := m.s.RegisterRobot(ctx, &server.RegisterRobotRequest{
+		RobotName: request.RobotName,
+		RobotType: robot.GrpcRobotType(request.RobotType),
+		IpAddr:    request.IpAddr,
+		Port:      request.Port,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ToPbRegisterRobotReply(reply), nil
 }
 
 func (m MahjongServer) Ready(stream mahjong.Mahjong_ReadyServer) (err error) {

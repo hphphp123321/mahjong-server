@@ -10,24 +10,24 @@ import (
 	"time"
 
 	"github.com/hphphp123321/mahjong-go/mahjong"
-	"github.com/sashabaranov/go-openai"
+	openai "github.com/sashabaranov/go-openai"
 )
 
 // 确保实现了Robot接口
-var _ Robot = (*ChatGPT)(nil)
+var _ Robot = (*ChatGPTRobot)(nil)
 
-type ChatGPT struct {
+type ChatGPTRobot struct {
 	Key      string
 	Model    string
 	Lang     string
 	ProxyUrl string
 }
 
-func (r *ChatGPT) GetRobotType() string {
+func (r *ChatGPTRobot) GetRobotType() string {
 	return "chatgpt"
 }
 
-func (r *ChatGPT) ChooseAction(events mahjong.Events, validActions mahjong.Calls) (actionIdx int) {
+func (r *ChatGPTRobot) ChooseAction(events mahjong.Events, validActions mahjong.Calls) (actionIdx int) {
 	if len(validActions) == 1 {
 		return 0
 	}
@@ -37,7 +37,7 @@ func (r *ChatGPT) ChooseAction(events mahjong.Events, validActions mahjong.Calls
 	return r.chatgptChooseAction(b)
 }
 
-func (r *ChatGPT) chatgptChooseAction(boardState *mahjong.BoardState) (actionIdx int) {
+func (r *ChatGPTRobot) chatgptChooseAction(boardState *mahjong.BoardState) (actionIdx int) {
 	var conf = openai.DefaultConfig(r.Key)
 
 	var transport *http.Transport = http.DefaultTransport.(*http.Transport)
@@ -107,7 +107,7 @@ func (r *ChatGPT) chatgptChooseAction(boardState *mahjong.BoardState) (actionIdx
 	return choice
 }
 
-func (r *ChatGPT) chatgptReChooseAction(client *openai.Client, prompt string, boardState *mahjong.BoardState) (actionIdx int) {
+func (r *ChatGPTRobot) chatgptReChooseAction(client *openai.Client, prompt string, boardState *mahjong.BoardState) (actionIdx int) {
 
 	fmt.Println()
 	fmt.Println("Restart chatgpt request")
@@ -154,7 +154,7 @@ func (r *ChatGPT) chatgptReChooseAction(client *openai.Client, prompt string, bo
 	return choice
 }
 
-func (r *ChatGPT) getEnPrompt(boardState *mahjong.BoardState) string {
+func (r *ChatGPTRobot) getEnPrompt(boardState *mahjong.BoardState) string {
 	var background = "Background: You're a Japanese Riichi mahjong pro, and you're playing one game. " +
 		"The format of tiles are like \"Man1\" which means 1m or 一万, \"Sou3\" means 3s or 三索, \"Ton, Nan, Shaa, Pei\" means 东, 南, 西, 北, \"Haku, Hatsu, Chun\" means 白, 发, 中\n"
 	var motivation = "Goal: You need to choose the optimal play based on the current situation\n"

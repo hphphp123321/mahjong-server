@@ -3,203 +3,21 @@ syntax = "proto3";
 option go_package = "api.mahjong.v1";
 option csharp_namespace = "MahjongProto";
 
-package mahjong;
+package grpcRobot;
 
-service Mahjong {
-  rpc Ping (Empty) returns (Empty) {}
+service GrpcRobot {
+  rpc ChooseAction (ChooseActionRequest) returns (ChooseActionReply) {}
 
-  rpc Login (LoginRequest) returns (LoginReply) {}
-
-  rpc Logout (Empty) returns (LogoutReply) {}
-
-  rpc CreateRoom (CreateRoomRequest) returns (CreateRoomReply) {}
-
-  rpc JoinRoom (JoinRoomRequest) returns (JoinRoomReply) {}
-
-  rpc ListRooms (ListRoomsRequest) returns (ListRoomsReply) {}
-
-  rpc ListRobots (Empty) returns (ListRobotsReply) {}
-
-  rpc RegisterRobot (RegisterRobotRequest) returns (RegisterRobotReply) {}
-
-  rpc Ready (stream ReadyRequest) returns (stream ReadyReply) {}
-
-  rpc Game (stream GameRequest) returns (stream GameReply) {}
+  rpc ChooseActionByBoardState (BoardState) returns (ChooseActionReply) {}
 }
 
-message Empty {}
-
-message LoginRequest {
-  string playerName = 1;
+message ChooseActionRequest {
+  repeated Event events = 1;
+  repeated Call validActions = 2;
 }
 
-message LoginReply {
-  string message = 1;
-  string id = 2;
-  optional ReconnectInfo reconnectInfo = 3;
-}
-
-message LogoutReply {
-  string message = 1;
-}
-
-message ReconnectInfo {
-  string message = 1;
-  oneof reconnectInfo {
-    RoomInfo room = 2;
-    Events events = 3;
-  }
-}
-
-message RoomInfo{
-  string roomID = 1;
-  string roomName = 2;
-  int32  ownerSeat = 3;
-  repeated PlayerInfo players = 4;
-}
-
-message PlayerInfo{
-  string playerName = 1;
-  int32 playerSeat = 2;
-  bool isReady = 3;
-}
-
-message CreateRoomRequest {
-  string roomName = 1;
-}
-
-message CreateRoomReply {
-  string message = 1;
-  RoomInfo room = 2;
-}
-
-message JoinRoomRequest {
-  string roomID = 1;
-}
-
-message JoinRoomReply {
-  string message = 1;
-  RoomInfo room = 2;
-  int32 seat = 3;
-}
-
-message ListRoomsRequest {
-  optional string roomName = 1;
-}
-
-message ListRoomsReply {
-  string message = 1;
-  repeated RoomInfo rooms = 2;
-}
-
-message RegisterRobotRequest {
-  string robotName = 1;
-  RobotType robotType = 2;
-  string ipAddr = 3;
-  int32 port = 4;
-}
-
-message RegisterRobotReply {
-  string message = 1;
-}
-
-
-message ReadyRequest {
-  oneof request {
-    Empty refreshRoom = 1;
-    Empty getReady = 2;
-    Empty cancelReady = 3;
-    AddRobotRequest addRobot = 4;
-    RemovePlayerRequest removePlayer = 5;
-    Empty leaveRoom = 6;
-    StartGameRequest startGame = 7;
-    ChatRequest chat = 8;
-  }
-}
-
-message ReadyReply {
-  string message  = 1;
-  oneof reply {
-    RoomInfo refreshRoomReply = 2;
-    PlayerJoinReply playerJoin = 3;
-    GetReadyReply getReady = 4;
-    CancelReadyReply cancelReady = 5;
-    AddRobotReply addRobot = 6;
-    PlayerLeaveReply playerLeave = 7;
-    StartGameReply startGame = 8;
-    ChatReply chat = 9;
-  }
-}
-
-message GameRequest {
-  oneof request {
-    Empty refreshGame = 1;
-    Call action = 2;
-    ChatRequest chat = 3;
-  }
-}
-
-message GameReply {
-  string message = 1;
-  repeated Event events = 2;
-  oneof reply {
-    BoardState refreshGameReply = 3;
-    ChatReply chat = 5;
-  }
-  repeated Call validActions = 4;
-  optional bool end = 6;
-}
-
-message LeaveRoomRequest {
-  string roomID = 1;
-}
-
-message AddRobotRequest {
-  int32 robotSeat = 1;
-  string robotType = 2;
-}
-
-message RemovePlayerRequest {
-  int32 playerSeat = 1;
-}
-
-message GetReadyReply{
-  int32 seat = 1;
-  string playerName = 2;
-}
-
-message CancelReadyReply{
-  int32 seat = 1;
-  string playerName = 2;
-}
-
-message AddRobotReply{
-  int32 robotSeat = 1;
-  string robotName = 2;
-}
-
-message PlayerJoinReply{
-  int32 seat = 1;
-  string playerName = 2;
-}
-
-message PlayerLeaveReply{
-  int32 seat = 1;
-  int32 ownerSeat = 2;
-  string playerName = 3;
-}
-
-message ListRobotsReply {
-  repeated string robotTypes = 1;
-}
-
-message StartGameRequest {
-  Rule gameRule = 1;
-  int32 mode = 2;
-}
-
-message StartGameReply {
-  repeated int32 seatsOrder = 1;
+message ChooseActionReply {
+  int32 actionIdx = 1;
 }
 
 message Call {
@@ -409,11 +227,6 @@ message TenpaiResult {
 }
 
 // 枚举类型
-
-enum RobotType {
-  RobotEvents = 0;  // 靠发送events和valid actions来控制
-  RobotBoardState = 1; // 靠发送board state来控制
-}
 
 enum Limit {
   LimitNone = 0;

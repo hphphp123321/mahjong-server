@@ -6,15 +6,15 @@ import (
 )
 
 // 确保实现了Robot接口
-var _ Robot = (*Simple)(nil)
+var _ Robot = (*SimpleRobot)(nil)
 
-type Simple struct {
+type SimpleRobot struct {
 }
 
-func (r *Simple) GetRobotType() string {
+func (r *SimpleRobot) GetRobotType() string {
 	return "base"
 }
 
-func (r *Simple) ChooseAction(events mahjong.Events, validActions mahjong.Calls) (actionIdx int) {
+func (r *SimpleRobot) ChooseAction(events mahjong.Events, validActions mahjong.Calls) (actionIdx int) {
 	return rand.Intn(len(validActions))
 }

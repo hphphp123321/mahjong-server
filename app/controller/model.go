@@ -72,6 +72,12 @@ func ToPbListRobotsReply(reply *server.ListRobotsReply) *pb.ListRobotsReply {
 	}
 }
 
+func ToPbRegisterRobotReply(reply *server.RegisterRobotReply) *pb.RegisterRobotReply {
+	return &pb.RegisterRobotReply{
+		Message: RegisterRobotMsg(reply.RobotName),
+	}
+}
+
 func ToServerStartStreamRequest(actionChan chan *mahjong.Call) *server.StreamRequest {
 	return &server.StreamRequest{
 		Call: actionChan,

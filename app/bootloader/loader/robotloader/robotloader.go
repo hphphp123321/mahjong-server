@@ -10,11 +10,11 @@ type RobotLoader struct {
 }
 
 func (loader *RobotLoader) Load(ctx context.Context, env map[string]string) error {
-	global.RobotRegistry.Register(&robot.Simple{})
+	global.RobotRegistry.Register(&robot.SimpleRobot{})
 
 	var conf = global.C.Openai
 	if conf.Key != "" && conf.Model != "" {
-		var chatgptRobot = &robot.ChatGPT{
+		var chatgptRobot = &robot.ChatGPTRobot{
 			Key:      conf.Key,
 			Model:    conf.Model,
 			Lang:     conf.Lang,

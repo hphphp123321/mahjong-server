@@ -4,6 +4,7 @@ import (
 	"github.com/hphphp123321/mahjong-go/mahjong"
 	"github.com/hphphp123321/mahjong-server/app/model/player"
 	"github.com/hphphp123321/mahjong-server/app/model/room"
+	"github.com/hphphp123321/mahjong-server/app/service/robot"
 )
 
 type LoginRequest struct {
@@ -72,6 +73,17 @@ type PlayerLeaveReply struct {
 
 type ListRobotsReply struct {
 	RobotTypes []string
+}
+
+type RegisterRobotRequest struct {
+	RobotName string
+	RobotType robot.GrpcRobotType
+	IpAddr    string
+	Port      int32
+}
+
+type RegisterRobotReply struct {
+	RobotName string
 }
 
 type ListPlayerIDsReply struct {

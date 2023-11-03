@@ -3,7 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
-	"github.com/hphphp123321/mahjong-server/app/api/v1/mahjong"
+	mahjong "github.com/hphphp123321/mahjong-server/app/api/v1/mahjong"
 	"github.com/hphphp123321/mahjong-server/app/errs"
 	"github.com/hphphp123321/mahjong-server/app/global"
 	"io"
