@@ -2,6 +2,7 @@ package robotloader
 
 import (
 	"context"
+
 	"github.com/hphphp123321/mahjong-server/app/global"
 	"github.com/hphphp123321/mahjong-server/app/service/robot"
 )
@@ -15,6 +16,7 @@ func (loader *RobotLoader) Load(ctx context.Context, env map[string]string) erro
 	var conf = global.C.Openai
 	if conf.Key != "" && conf.Model != "" {
 		var chatgptRobot = &robot.ChatGPTRobot{
+			BaseUrl:  conf.BaseURL,
 			Key:      conf.Key,
 			Model:    conf.Model,
 			Lang:     conf.Lang,

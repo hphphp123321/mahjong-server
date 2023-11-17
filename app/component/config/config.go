@@ -6,6 +6,7 @@ type App struct {
 }
 
 type Openai struct {
+	BaseURL  string `yaml:"baseURL"`
 	Key      string `yaml:"key"`
 	Model    string `yaml:"model"`
 	Lang     string `yaml:"lang"`

@@ -17,6 +17,7 @@ import (
 var _ Robot = (*ChatGPTRobot)(nil)
 
 type ChatGPTRobot struct {
+	BaseUrl  string
 	Key      string
 	Model    string
 	Lang     string
@@ -39,6 +40,10 @@ func (r *ChatGPTRobot) ChooseAction(events mahjong.Events, validActions mahjong.
 
 func (r *ChatGPTRobot) chatgptChooseAction(boardState *mahjong.BoardState) (actionIdx int) {
 	var conf = openai.DefaultConfig(r.Key)
+	if r.BaseUrl != "" {
+		conf.BaseURL = "https://api.f2gpt.com/v1"
+	}
+	// conf.BaseURL = "https://api.openai.com/v1"
 
 	var transport *http.Transport = http.DefaultTransport.(*http.Transport)
 

@@ -30,6 +30,12 @@ vendor/
 config/
 *.yaml
 
+# Build
+build/
+
+# Logs
+logs/
+
 
 # Go workspace file
 go.work

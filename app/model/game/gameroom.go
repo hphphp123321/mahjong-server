@@ -1,11 +1,12 @@
 package game
 
 import (
+	"time"
+
 	"github.com/hphphp123321/mahjong-go/mahjong"
 	"github.com/hphphp123321/mahjong-server/app/errs"
 	"github.com/hphphp123321/mahjong-server/app/global"
 	"github.com/hphphp123321/mahjong-server/app/model/player"
-	"time"
 )
 
 type GameRoom struct {
@@ -97,6 +98,9 @@ func (r *GameRoom) StartGame(mode int, cancelReady func()) {
 			if err := recover(); err != nil {
 				// send end error
 				for seat := range r.seat2Order {
+					if r.PlayersEventsChan[seat] == nil {
+						continue
+					}
 					select {
 					case r.PlayersEventsChan[seat] <- &player.GameEventChannel{Err: errs.ErrGameEndUnexpect}:
 					default:
