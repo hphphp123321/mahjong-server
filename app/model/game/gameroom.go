@@ -87,6 +87,21 @@ func (r *GameRoom) GetBoardStateBySeat(seat int) *mahjong.BoardState {
 	return r.game.GetPosBoardState(r.getWindBySeat(seat), nil)
 }
 
+func (r *GameRoom) sendError(seat int, err error) {
+	r.PlayersEventsChan[seat] <- &player.GameEventChannel{
+		Err: err,
+	}
+}
+
+func (r *GameRoom) sendErrorsExcept(seat int, err error) {
+	for s := range r.PlayersEventsChan {
+		if s == seat {
+			continue
+		}
+		r.sendError(s, err)
+	}
+}
+
 func (r *GameRoom) StartGame(mode int, cancelReady func()) {
 	go func() {
 		for !r.CheckRegister() {
@@ -97,17 +112,7 @@ func (r *GameRoom) StartGame(mode int, cancelReady func()) {
 		defer func() {
 			if err := recover(); err != nil {
 				// send end error
-				for seat := range r.seat2Order {
-					if r.PlayersEventsChan[seat] == nil {
-						continue
-					}
-					select {
-					case r.PlayersEventsChan[seat] <- &player.GameEventChannel{Err: errs.ErrGameEndUnexpect}:
-					default:
-						// player leave in game
-						global.Log.Warnln("send end error failed")
-					}
-				}
+				global.Log.Errorf("game end unexpect: %v", err)
 			}
 		}()
 
@@ -148,12 +153,20 @@ func (r *GameRoom) StartGame(mode int, cancelReady func()) {
 				r.sendValidActions(r.getSeatByWind(wind), calls)
 			}
 
+			var ok bool
+
 			// recv action
 			for wind, playerCalls := range posCalls {
 				var playerCall *mahjong.Call
-				playerCall = <-r.PlayersAction[r.getSeatByWind(wind)]
+				playerCall, ok = <-r.PlayersAction[r.getSeatByWind(wind)]
+				if !ok {
+					r.sendErrorsExcept(r.getSeatByWind(wind), errs.ErrGameEndUnexpect)
+				}
 				for !playerCalls.Contains(playerCall) {
-					playerCall = <-r.PlayersAction[r.getSeatByWind(wind)]
+					playerCall, ok = <-r.PlayersAction[r.getSeatByWind(wind)]
+					if !ok {
+						r.sendErrorsExcept(r.getSeatByWind(wind), errs.ErrGameEndUnexpect)
+					}
 				}
 				posCall[wind] = playerCall
 			}
@@ -171,4 +184,5 @@ func (r *GameRoom) StartGame(mode int, cancelReady func()) {
 
 		cancelReady()
 	}()
+
 }

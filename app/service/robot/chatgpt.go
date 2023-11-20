@@ -25,7 +25,7 @@ type ChatGPTRobot struct {
 }
 
 func (r *ChatGPTRobot) GetRobotType() string {
-	return "chatgpt"
+	return r.Model
 }
 
 func (r *ChatGPTRobot) ChooseAction(events mahjong.Events, validActions mahjong.Calls) (actionIdx int) {
@@ -41,7 +41,7 @@ func (r *ChatGPTRobot) ChooseAction(events mahjong.Events, validActions mahjong.
 func (r *ChatGPTRobot) chatgptChooseAction(boardState *mahjong.BoardState) (actionIdx int) {
 	var conf = openai.DefaultConfig(r.Key)
 	if r.BaseUrl != "" {
-		conf.BaseURL = "https://api.f2gpt.com/v1"
+		conf.BaseURL = r.BaseUrl
 	}
 	// conf.BaseURL = "https://api.openai.com/v1"
 

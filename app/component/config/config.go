@@ -8,7 +8,7 @@ type App struct {
 type Openai struct {
 	BaseURL  string `yaml:"baseURL"`
 	Key      string `yaml:"key"`
-	Model    string `yaml:"model"`
+	Models    []string `yaml:"models"`
 	Lang     string `yaml:"lang"`
 	ProxyUrl string `yaml:"proxyUrl"`
 }

@@ -14,16 +14,18 @@ func (loader *RobotLoader) Load(ctx context.Context, env map[string]string) erro
 	global.RobotRegistry.Register(&robot.SimpleRobot{})
 
 	var conf = global.C.Openai
-	if conf.Key != "" && conf.Model != "" {
-		var chatgptRobot = &robot.ChatGPTRobot{
-			BaseUrl:  conf.BaseURL,
-			Key:      conf.Key,
-			Model:    conf.Model,
-			Lang:     conf.Lang,
-			ProxyUrl: conf.ProxyUrl,
+	if conf.Key != "" {
+		for _, model := range conf.Models {
+			var chatgptRobot = &robot.ChatGPTRobot{
+				BaseUrl:  conf.BaseURL,
+				Key:      conf.Key,
+				Model:    model,
+				Lang:     conf.Lang,
+				ProxyUrl: conf.ProxyUrl,
+			}
+			global.RobotRegistry.Register(chatgptRobot)
+			global.Log.Infof("chatgpt robot %s registered!", model)
 		}
-		global.RobotRegistry.Register(chatgptRobot)
-		global.Log.Infoln("chatgpt robot registered!")
 
 	}
 	return nil
