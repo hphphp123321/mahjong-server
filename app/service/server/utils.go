@@ -32,11 +32,10 @@ func TestAllRobots() {
 	var validActions = g.Reset(players, nil)[mahjong.East]
 	var events = g.GetPosEvents(mahjong.East, 0)
 
-	for robotType, r := range robotRegistry.Robots {
+	for _, r := range robotRegistry.ListNotBuiltInRobots() {
 		if _, err := r.ChooseAction(events, validActions); err != nil {
-			global.Log.Infoln("robotType:", robotType, "err:", err, "delete robot")
-			delete(robotRegistry.Robots, robotType)
+			global.Log.Infoln("robotType:", r.GetRobotType(), "err:", err, "delete robot")
+			delete(robotRegistry.Robots, r.GetRobotType())
 		}
 	}
-	return
 }

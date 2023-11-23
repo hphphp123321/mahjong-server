@@ -67,3 +67,17 @@ func (r *Registry) GetRandomRobot() Robot {
 	robot, _ := r.GetRobot(r.GetRandomRobotType())
 	return robot
 }
+
+func (r *Registry) ListNotBuiltInRobots() []Robot {
+	var robots []Robot
+	for robotType, robot := range r.Robots {
+		if !isRobotBuiltIn(robotType) {
+			robots = append(robots, robot)
+		}
+	}
+	return robots
+}
+
+func isRobotBuiltIn(robotType string) bool {
+	return robotType == "base" || robotType == "gpt-3.5-turbo" || robotType == "gpt-4"
+}
