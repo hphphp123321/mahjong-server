@@ -2,6 +2,7 @@ package robotloader
 
 import (
 	"context"
+	"github.com/hphphp123321/mahjong-server/app/service/robot/chatgpt"
 
 	"github.com/hphphp123321/mahjong-server/app/global"
 	"github.com/hphphp123321/mahjong-server/app/service/robot"
@@ -11,19 +12,23 @@ type RobotLoader struct {
 }
 
 func (loader *RobotLoader) Load(ctx context.Context, env map[string]string) error {
-	global.RobotRegistry.Register(&robot.SimpleRobot{})
+	_ = global.RobotRegistry.Register(&robot.SimpleRobot{})
 
 	var conf = global.C.Openai
 	if conf.Key != "" {
 		for _, model := range conf.Models {
-			var chatgptRobot = &robot.ChatGPTRobot{
+			var chatgptRobot = &chatgpt.ChatGPTRobot{
 				BaseUrl:  conf.BaseURL,
 				Key:      conf.Key,
 				Model:    model,
 				Lang:     conf.Lang,
 				ProxyUrl: conf.ProxyUrl,
 			}
-			global.RobotRegistry.Register(chatgptRobot)
+			err := global.RobotRegistry.Register(chatgptRobot)
+			if err != nil {
+				global.Log.Errorf("chatgpt robot %s register failed: %v", model, err)
+				continue
+			}
 			global.Log.Infof("chatgpt robot %s registered!", model)
 		}
 

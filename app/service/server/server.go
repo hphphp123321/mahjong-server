@@ -7,7 +7,7 @@ import (
 	"github.com/hphphp123321/mahjong-server/app/global"
 	"github.com/hphphp123321/mahjong-server/app/model/player"
 	"github.com/hphphp123321/mahjong-server/app/model/room"
-	"github.com/hphphp123321/mahjong-server/app/service/robot"
+	"github.com/hphphp123321/mahjong-server/app/service/robot/remote"
 	"google.golang.org/grpc/metadata"
 	"regexp"
 )
@@ -321,17 +321,23 @@ func (i ImplServer) ListRobots(ctx context.Context) (reply *ListRobotsReply, err
 	if err != nil {
 		return nil, err
 	}
+	TestAllRobots()
 	return &ListRobotsReply{
 		RobotTypes: global.RobotRegistry.GetRobotTypes(),
 	}, nil
 }
 
 func (i ImplServer) RegisterRobot(ctx context.Context, request *RegisterRobotRequest) (reply *RegisterRobotReply, err error) {
-	grpcRobot, err := robot.NewGrpcRobot(request.RobotName, request.RobotType, request.IpAddr, request.Port)
+	grpcRobot, err := remote.NewGrpcRobot(request.RobotName, request.RobotType, request.Addr)
 	if err != nil {
 		return nil, err
 	}
-	global.RobotRegistry.Register(grpcRobot)
+	if err = TestRobot(grpcRobot); err != nil {
+		return nil, err
+	}
+	if err = global.RobotRegistry.Register(grpcRobot); err != nil {
+		return nil, err
+	}
 	global.Log.Infof("robot %s registered", grpcRobot.Name)
 	return &RegisterRobotReply{
 		RobotName: grpcRobot.Name,

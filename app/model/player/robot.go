@@ -23,11 +23,14 @@ func StartRobotStream(r robot.Robot, ech chan *GameEventChannel, ach chan *mahjo
 				} else if ge.Err != nil {
 					global.Log.Warnf("robot %s error: %v", r.GetRobotType(), ge.Err)
 				} else if ge.ValidActions != nil {
-					actionIdx := r.ChooseAction(events, ge.ValidActions)
+					actionIdx, err := r.ChooseAction(events, ge.ValidActions)
+					if err != nil {
+						global.Log.Warnf("robot %s choose action error: %v", r.GetRobotType(), err)
+						actionIdx = 0
+					}
 					action := ge.ValidActions[actionIdx]
 					ach <- action
 				}
-
 			}
 		}
 	}()

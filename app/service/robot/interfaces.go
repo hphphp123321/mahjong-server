@@ -6,5 +6,5 @@ import (
 
 type Robot interface {
 	GetRobotType() string
-	ChooseAction(events mahjong.Events, validActions mahjong.Calls) (actionIdx int)
+	ChooseAction(events mahjong.Events, validActions mahjong.Calls) (actionIdx int, err error)
 }

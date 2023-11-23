@@ -3,7 +3,7 @@ syntax = "proto3";
 option go_package = "api.mahjong.v1";
 option csharp_namespace = "MahjongProto";
 
-package mahjong;
+package mahjong_pb;
 
 service Mahjong {
   rpc Ping (Empty) returns (Empty) {}
@@ -95,8 +95,7 @@ message ListRoomsReply {
 message RegisterRobotRequest {
   string robotName = 1;
   RobotType robotType = 2;
-  string ipAddr = 3;
-  int32 port = 4;
+  int32 port = 3;
 }
 
 message RegisterRobotReply {
@@ -413,6 +412,7 @@ message TenpaiResult {
 enum RobotType {
   RobotEvents = 0;  // 靠发送events和valid actions来控制
   RobotBoardState = 1; // 靠发送board state来控制
+  RobotJson = 2; // 靠发送json来控制
 }
 
 enum Limit {

@@ -1,26 +1,31 @@
 package robot
 
 import (
+	"fmt"
 	"math/rand"
 	"strings"
 )
 
 type Registry struct {
-	robots map[string]Robot
+	Robots map[string]Robot
 }
 
 func NewRegistry() *Registry {
 	return &Registry{
-		robots: make(map[string]Robot),
+		Robots: make(map[string]Robot),
 	}
 }
 
-func (r *Registry) Register(robot Robot) {
-	r.robots[robot.GetRobotType()] = robot
+func (r *Registry) Register(robot Robot) error {
+	if robot.GetRobotType() == "" {
+		return fmt.Errorf("robot type is empty")
+	}
+	r.Robots[robot.GetRobotType()] = robot
+	return nil
 }
 
 func (r *Registry) Unregister(robotType string) {
-	delete(r.robots, robotType)
+	delete(r.Robots, robotType)
 }
 
 func (r *Registry) GetRobot(robotName string) (robot Robot, ok bool) {
@@ -28,24 +33,24 @@ func (r *Registry) GetRobot(robotName string) (robot Robot, ok bool) {
 	if strings.Contains(robotName, "(com)") {
 		robotType = strings.Split(robotName, "(com)")[0]
 	}
-	robot, ok = r.robots[robotType]
+	robot, ok = r.Robots[robotType]
 	return robot, ok
 }
 
 func (r *Registry) GetRobotTypes() []string {
-	robotTypes := make([]string, 0, len(r.robots))
-	for robotType := range r.robots {
+	robotTypes := make([]string, 0, len(r.Robots))
+	for robotType := range r.Robots {
 		robotTypes = append(robotTypes, robotType)
 	}
 	return robotTypes
 }
 
 func (r *Registry) GetRobotCount() int {
-	return len(r.robots)
+	return len(r.Robots)
 }
 
 func (r *Registry) IsRobotTypeExist(robotType string) bool {
-	_, ok := r.robots[robotType]
+	_, ok := r.Robots[robotType]
 	return ok
 }
 

@@ -1,8 +1,10 @@
-package robot
+package chatgpt
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/hphphp123321/mahjong-server/app/service/robot"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -14,7 +16,7 @@ import (
 )
 
 // 确保实现了Robot接口
-var _ Robot = (*ChatGPTRobot)(nil)
+var _ robot.Robot = (*ChatGPTRobot)(nil)
 
 type ChatGPTRobot struct {
 	BaseUrl  string
@@ -28,9 +30,9 @@ func (r *ChatGPTRobot) GetRobotType() string {
 	return r.Model
 }
 
-func (r *ChatGPTRobot) ChooseAction(events mahjong.Events, validActions mahjong.Calls) (actionIdx int) {
+func (r *ChatGPTRobot) ChooseAction(events mahjong.Events, validActions mahjong.Calls) (actionIdx int, err error) {
 	if len(validActions) == 1 {
-		return 0
+		return 0, nil
 	}
 	var b = mahjong.NewBoardState()
 	b.DecodeEvents(events)
@@ -38,7 +40,7 @@ func (r *ChatGPTRobot) ChooseAction(events mahjong.Events, validActions mahjong.
 	return r.chatgptChooseAction(b)
 }
 
-func (r *ChatGPTRobot) chatgptChooseAction(boardState *mahjong.BoardState) (actionIdx int) {
+func (r *ChatGPTRobot) chatgptChooseAction(boardState *mahjong.BoardState) (actionIdx int, err error) {
 	var conf = openai.DefaultConfig(r.Key)
 	if r.BaseUrl != "" {
 		conf.BaseURL = r.BaseUrl
@@ -52,7 +54,6 @@ func (r *ChatGPTRobot) chatgptChooseAction(boardState *mahjong.BoardState) (acti
 	} else if r.ProxyUrl != "" {
 		var proxy, err = url.Parse(r.ProxyUrl)
 		if err != nil {
-			fmt.Println(err)
 			transport.Proxy = nil // 不设置代理
 		} else {
 			transport.Proxy = http.ProxyURL(proxy)
@@ -98,7 +99,6 @@ func (r *ChatGPTRobot) chatgptChooseAction(boardState *mahjong.BoardState) (acti
 	}
 	choice, err = strconv.Atoi(choiceS)
 	if err != nil {
-		fmt.Println(err)
 		return r.chatgptReChooseAction(client, prompt, boardState)
 	}
 	if (choice < 0) || (choice >= len(boardState.ValidActions)) {
@@ -109,10 +109,10 @@ func (r *ChatGPTRobot) chatgptChooseAction(boardState *mahjong.BoardState) (acti
 	fmt.Println("end chatgpt request")
 	fmt.Println()
 
-	return choice
+	return choice, nil
 }
 
-func (r *ChatGPTRobot) chatgptReChooseAction(client *openai.Client, prompt string, boardState *mahjong.BoardState) (actionIdx int) {
+func (r *ChatGPTRobot) chatgptReChooseAction(client *openai.Client, prompt string, boardState *mahjong.BoardState) (actionIdx int, err error) {
 
 	fmt.Println()
 	fmt.Println("Restart chatgpt request")
@@ -131,8 +131,7 @@ func (r *ChatGPTRobot) chatgptReChooseAction(client *openai.Client, prompt strin
 		},
 	)
 	if err != nil {
-		fmt.Println(err)
-		return rand.Intn(len(boardState.ValidActions))
+		return rand.Intn(len(boardState.ValidActions)), err
 	}
 	var content = resp.Choices[0].Message.Content
 	var choice int
@@ -146,17 +145,16 @@ func (r *ChatGPTRobot) chatgptReChooseAction(client *openai.Client, prompt strin
 	}
 	choice, err = strconv.Atoi(choiceS)
 	if err != nil {
-		fmt.Println(err)
-		return rand.Intn(len(boardState.ValidActions))
+		return rand.Intn(len(boardState.ValidActions)), err
 	}
 	if (choice < 0) || (choice >= len(boardState.ValidActions)) {
-		return rand.Intn(len(boardState.ValidActions))
+		return rand.Intn(len(boardState.ValidActions)), errors.New("choice out of range")
 	}
 	fmt.Println("Choice: " + boardState.ValidActions[choice].String())
 	fmt.Println("End chatgpt request")
 	fmt.Println()
 
-	return choice
+	return choice, nil
 }
 
 func (r *ChatGPTRobot) getEnPrompt(boardState *mahjong.BoardState) string {

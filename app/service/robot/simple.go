@@ -15,6 +15,6 @@ func (r *SimpleRobot) GetRobotType() string {
 	return "base"
 }
 
-func (r *SimpleRobot) ChooseAction(events mahjong.Events, validActions mahjong.Calls) (actionIdx int) {
-	return rand.Intn(len(validActions))
+func (r *SimpleRobot) ChooseAction(events mahjong.Events, validActions mahjong.Calls) (actionIdx int, err error) {
+	return rand.Intn(len(validActions)), nil
 }
