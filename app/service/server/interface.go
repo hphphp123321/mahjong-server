@@ -26,6 +26,7 @@ type Server interface {
 	RemovePlayer(ctx context.Context, request *RemovePlayerRequest) (reply *PlayerLeaveReply, err error)
 	ListRobots(ctx context.Context) (reply *ListRobotsReply, err error)
 	RegisterRobot(ctx context.Context, request *RegisterRobotRequest) (reply *RegisterRobotReply, err error)
+	UnRegisterRobot(ctx context.Context, robotName string) (err error)
 
 	StartGame(ctx context.Context, request *StartGameRequest) (reply *StartGameReply, err error)
 	StartStream(ctx context.Context, request *StreamRequest) (reply *StreamReply, err error)

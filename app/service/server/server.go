@@ -2,6 +2,11 @@ package server
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"net"
+	"regexp"
+
 	"github.com/hphphp123321/mahjong-go/mahjong"
 	"github.com/hphphp123321/mahjong-server/app/errs"
 	"github.com/hphphp123321/mahjong-server/app/global"
@@ -9,7 +14,7 @@ import (
 	"github.com/hphphp123321/mahjong-server/app/model/room"
 	"github.com/hphphp123321/mahjong-server/app/service/robot/remote"
 	"google.golang.org/grpc/metadata"
-	"regexp"
+	"google.golang.org/grpc/peer"
 )
 
 type ImplServer struct {
@@ -328,7 +333,18 @@ func (i ImplServer) ListRobots(ctx context.Context) (reply *ListRobotsReply, err
 }
 
 func (i ImplServer) RegisterRobot(ctx context.Context, request *RegisterRobotRequest) (reply *RegisterRobotReply, err error) {
-	grpcRobot, err := remote.NewGrpcRobot(request.RobotName, request.RobotType, request.Addr)
+	p, ok := peer.FromContext(ctx)
+	if !ok {
+		return nil, errors.New("peer not found")
+	}
+	clientIP, _, err := net.SplitHostPort(p.Addr.String())
+	if err != nil {
+		return nil, err
+	}
+	robotAddr := fmt.Sprintf("%s:%d", clientIP, request.Port)
+	global.Log.Infof("robot addr: %s", robotAddr)
+
+	grpcRobot, err := remote.NewGrpcRobot(request.RobotName, request.RobotType, robotAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -342,6 +358,35 @@ func (i ImplServer) RegisterRobot(ctx context.Context, request *RegisterRobotReq
 	return &RegisterRobotReply{
 		RobotName: grpcRobot.Name,
 	}, nil
+}
+
+func (i ImplServer) UnRegisterRobot(ctx context.Context, robotName string) (err error) {
+	p, ok := peer.FromContext(ctx)
+	if !ok {
+		return errors.New("peer not found")
+	}
+	clientIP, _, err := net.SplitHostPort(p.Addr.String())
+	if err != nil {
+		return err
+	}
+
+	robot, ok := global.RobotRegistry.GetRobot(robotName)
+	if !ok {
+		return errs.ErrRobotNotFound
+	}
+	grpcRobot, ok := robot.(*remote.GrpcRobot)
+	if !ok {
+		return errors.New("robot type not grpc")
+	}
+	if grpcRobot.IP != clientIP {
+		return errors.New("client ip not match")
+	}
+
+	if err = global.RobotRegistry.Unregister(robotName); err != nil {
+		return err
+	}
+	global.Log.Infof("robot %s unregistered", robotName)
+	return nil
 }
 
 func (i ImplServer) ListPlayerIDs(ctx context.Context) (reply *ListPlayerIDsReply, err error) {

@@ -24,8 +24,12 @@ func (r *Registry) Register(robot Robot) error {
 	return nil
 }
 
-func (r *Registry) Unregister(robotType string) {
+func (r *Registry) Unregister(robotType string) error {
+	if _, ok := r.Robots[robotType]; !ok {
+		return fmt.Errorf("robot type %s not found", robotType)
+	}
 	delete(r.Robots, robotType)
+	return nil
 }
 
 func (r *Registry) GetRobot(robotName string) (robot Robot, ok bool) {

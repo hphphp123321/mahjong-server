@@ -23,4 +23,5 @@ var (
 	ErrGameEnd             = errors.New("game end")
 	ErrGameNotStart        = errors.New("game not start")
 	ErrGameEndUnexpect     = errors.New("game end unexpect")
+	ErrRobotNotFound       = errors.New("robot not found")
 )

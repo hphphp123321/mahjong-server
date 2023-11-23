@@ -3,6 +3,9 @@ package grpcloader
 import (
 	"context"
 	"fmt"
+	"net"
+	"time"
+
 	"github.com/hphphp123321/mahjong-server/app/api/middleware/interceptor/logger"
 	pb "github.com/hphphp123321/mahjong-server/app/api/v1/mahjong"
 	"github.com/hphphp123321/mahjong-server/app/controller"
@@ -11,8 +14,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
-	"net"
-	"time"
 )
 
 // GrpcLoader 相关依赖：globals.ProjectRoot
@@ -69,4 +70,15 @@ func (loader *GrpcLoader) Load(ctx context.Context, env map[string]string) error
 
 func (loader *GrpcLoader) Name() string {
 	return "GrpcLoader"
+}
+
+func StartRobotRegistryCheck() {
+	ticker := time.NewTicker(1 * time.Hour)
+
+	go func() {
+		for range ticker.C {
+			global.Log.Debugln("start check robot registry")
+			server.TestAllRobots()
+		}
+	}()
 }

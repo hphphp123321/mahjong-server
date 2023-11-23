@@ -22,6 +22,8 @@ service Mahjong {
 
   rpc RegisterRobot (RegisterRobotRequest) returns (RegisterRobotReply) {}
 
+  rpc UnregisterRobot (UnregisterRobotRequest) returns (Empty) {}
+
   rpc Ready (stream ReadyRequest) returns (stream ReadyReply) {}
 
   rpc Game (stream GameRequest) returns (stream GameReply) {}
@@ -100,6 +102,10 @@ message RegisterRobotRequest {
 
 message RegisterRobotReply {
   string message = 1;
+}
+
+message UnregisterRobotRequest {
+  string robotName = 1;
 }
 
 

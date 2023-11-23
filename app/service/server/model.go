@@ -78,7 +78,7 @@ type ListRobotsReply struct {
 type RegisterRobotRequest struct {
 	RobotName string
 	RobotType remote.GrpcRobotType
-	Addr      string
+	Port      int32
 }
 
 type RegisterRobotReply struct {

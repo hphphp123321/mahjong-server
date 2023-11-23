@@ -2,14 +2,11 @@ package controller
 
 import (
 	"context"
-	"errors"
-	"fmt"
+
 	mahjong "github.com/hphphp123321/mahjong-server/app/api/v1/mahjong"
 	"github.com/hphphp123321/mahjong-server/app/global"
 	"github.com/hphphp123321/mahjong-server/app/service/robot/remote"
 	"github.com/hphphp123321/mahjong-server/app/service/server"
-	"google.golang.org/grpc/peer"
-	"net"
 )
 
 type MahjongServer struct {
@@ -104,27 +101,24 @@ func (m MahjongServer) ListRobots(ctx context.Context, empty *mahjong.Empty) (*m
 
 func (m MahjongServer) RegisterRobot(ctx context.Context, request *mahjong.RegisterRobotRequest) (*mahjong.RegisterRobotReply, error) {
 
-	p, ok := peer.FromContext(ctx)
-	if !ok {
-		return nil, errors.New("peer not found")
-	}
-	clientIP, _, err := net.SplitHostPort(p.Addr.String())
-	if err != nil {
-		return nil, err
-	}
-	robotAddr := fmt.Sprintf("%s:%d", clientIP, request.Port)
-	global.Log.Infof("robot addr: %s", robotAddr)
-
 	reply, err := m.s.RegisterRobot(ctx, &server.RegisterRobotRequest{
 		RobotName: request.RobotName,
 		RobotType: remote.GrpcRobotType(request.RobotType),
-		Addr:      robotAddr,
+		Port:      request.Port,
 	})
 
 	if err != nil {
 		return nil, err
 	}
 	return ToPbRegisterRobotReply(reply), nil
+}
+
+func (m MahjongServer) UnregisterRobot(ctx context.Context, request *mahjong.UnregisterRobotRequest) (*mahjong.Empty, error) {
+	err := m.s.UnRegisterRobot(ctx, request.RobotName)
+	if err != nil {
+		return nil, err
+	}
+	return &mahjong.Empty{}, nil
 }
 
 func (m MahjongServer) Ready(stream mahjong.Mahjong_ReadyServer) (err error) {

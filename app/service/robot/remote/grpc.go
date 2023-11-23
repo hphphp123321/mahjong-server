@@ -2,6 +2,8 @@ package remote
 
 import (
 	"errors"
+	"net"
+
 	"github.com/hphphp123321/mahjong-go/mahjong"
 	gprcRobot "github.com/hphphp123321/mahjong-server/app/api/v1/robot"
 	"github.com/hphphp123321/mahjong-server/app/service/robot"
@@ -24,9 +26,11 @@ type GrpcRobot struct {
 	actionChooser ActionChooser
 
 	client gprcRobot.GrpcRobotClient
+	IP     string
 }
 
 func NewGrpcRobot(name string, robotType GrpcRobotType, addr string) (*GrpcRobot, error) {
+	clientIP, _, _ := net.SplitHostPort(addr)
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err
@@ -45,6 +49,7 @@ func NewGrpcRobot(name string, robotType GrpcRobotType, addr string) (*GrpcRobot
 		Name:          name,
 		actionChooser: actionChooser,
 		client:        client,
+		IP:            clientIP,
 	}, nil
 }
 
