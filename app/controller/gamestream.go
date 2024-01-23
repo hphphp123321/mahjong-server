@@ -3,12 +3,13 @@ package controller
 import (
 	"context"
 	"errors"
+	"io"
+
 	"github.com/hphphp123321/mahjong-go/mahjong"
 	mahjong2 "github.com/hphphp123321/mahjong-server/app/api/v1/mahjong"
 	"github.com/hphphp123321/mahjong-server/app/errs"
 	"github.com/hphphp123321/mahjong-server/app/global"
 	"github.com/hphphp123321/mahjong-server/app/service/server"
-	"io"
 )
 
 func AddGameStream(ctx context.Context, stream mahjong2.Mahjong_GameServer, server *MahjongServer) error {
@@ -16,7 +17,8 @@ func AddGameStream(ctx context.Context, stream mahjong2.Mahjong_GameServer, serv
 	if err != nil {
 		return err
 	}
-	server.clients[cid].gameStream = stream
+	c, _ := server.clients.Load(cid)
+	c.(*Client).gameStream = stream
 	return nil
 }
 
@@ -25,7 +27,8 @@ func RemoveGameStream(ctx context.Context, server *MahjongServer) error {
 	if err != nil {
 		return err
 	}
-	server.clients[cid].gameStream = nil
+	c, _ := server.clients.Load(cid)
+	c.(*Client).gameStream = nil
 	return nil
 }
 
@@ -35,14 +38,14 @@ func BoardCastGameReply(ctx context.Context, server *MahjongServer, reply *mahjo
 		return err
 	}
 	for _, pid := range r.PlayerIDs {
-		c, ok := server.clients[pid]
+		c, ok := server.clients.Load(pid)
 		if !ok {
 			return err
 		}
-		if c.gameStream == nil {
+		if c.(*Client).gameStream == nil {
 			continue
 		}
-		if err = c.gameStream.Send(reply); err != nil {
+		if err = c.(*Client).gameStream.Send(reply); err != nil {
 			return err
 		}
 	}
@@ -54,14 +57,14 @@ func SendBackGame(ctx context.Context, server *MahjongServer, reply *mahjong2.Ga
 	if err != nil {
 		return err
 	}
-	c, ok := server.clients[cid]
+	c, ok := server.clients.Load(cid)
 	if !ok {
 		return err
 	}
-	if c.gameStream == nil {
+	if c.(*Client).gameStream == nil {
 		return err
 	}
-	if err = c.gameStream.Send(reply); err != nil {
+	if err = c.(*Client).gameStream.Send(reply); err != nil {
 		return err
 	}
 	return nil
@@ -141,7 +144,7 @@ func SendValidActions(stream mahjong2.Mahjong_GameServer, validCalls mahjong.Cal
 
 func StartGameRecvStream(ctx context.Context, stream mahjong2.Mahjong_GameServer, server *MahjongServer) (done chan error, actionChan chan *mahjong.Call) {
 	done = make(chan error)
-	actionChan = make(chan *mahjong.Call, 1)
+	actionChan = make(chan *mahjong.Call, 20)
 	go func() {
 		for {
 			in, err := stream.Recv()
@@ -179,11 +182,11 @@ func handleGameAction(ctx context.Context, server *MahjongServer, in *mahjong2.G
 	if err != nil {
 		return err
 	}
-	c, ok := server.clients[cid]
+	c, ok := server.clients.Load(cid)
 	if !ok {
 		return err
 	}
-	if c.gameStream == nil {
+	if c.(*Client).gameStream == nil {
 		return err
 	}
 	call := in.GetAction()
@@ -197,11 +200,11 @@ func handleGameChat(ctx context.Context, server *MahjongServer, in *mahjong2.Gam
 	if err != nil {
 		return err
 	}
-	c, ok := server.clients[cid]
+	c, ok := server.clients.Load(cid)
 	if !ok {
 		return err
 	}
-	if c.gameStream == nil {
+	if c.(*Client).gameStream == nil {
 		return err
 	}
 	name, err := server.s.GetName(ctx)
@@ -218,11 +221,11 @@ func handleRefreshGame(ctx context.Context, server *MahjongServer) (err error) {
 	if err != nil {
 		return err
 	}
-	c, ok := server.clients[cid]
+	c, ok := server.clients.Load(cid)
 	if !ok {
 		return err
 	}
-	if c.gameStream == nil {
+	if c.(*Client).gameStream == nil {
 		return err
 	}
 	b, err := server.s.GetBoardState(ctx)

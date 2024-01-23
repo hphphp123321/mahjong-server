@@ -2,9 +2,11 @@ package configloader
 
 import (
 	"context"
+	"os"
+	"strings"
+
 	"github.com/hphphp123321/mahjong-server/app/global"
 	"gopkg.in/yaml.v3"
-	"os"
 )
 
 // ConfigLoader 相关依赖：globals.C
@@ -19,6 +21,9 @@ func (loader *ConfigLoader) Require() []string {
 
 func (loader *ConfigLoader) Load(ctx context.Context, env map[string]string) error {
 	target := global.ProjectRoot + "/config/app.yaml"
+	if strings.Contains(target, "cmd") {
+		target = global.ProjectRoot + "/../config/app.yaml"
+	}
 	fd, err := os.Open(target)
 	if err != nil {
 		return err

@@ -8,6 +8,7 @@ import (
 	"net"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/hphphp123321/mahjong-go/mahjong"
 	"github.com/hphphp123321/mahjong-server/app/errs"
@@ -19,12 +20,12 @@ import (
 	"google.golang.org/grpc/peer"
 )
 
-var _ Server = (*ImplServer)(nil)
-
 type ImplServer struct {
 	Server
 	players map[string]*player.Player
 	rooms   map[string]*room.Room
+
+	lock sync.Mutex
 }
 
 func NewImplServer() *ImplServer {
@@ -34,7 +35,7 @@ func NewImplServer() *ImplServer {
 	}
 }
 
-func (i ImplServer) AuthFuncOverride(ctx context.Context, fullMethodName string) (context.Context, error) {
+func (i *ImplServer) AuthFuncOverride(ctx context.Context, fullMethodName string) (context.Context, error) {
 	if strings.Contains(fullMethodName, "Login") || strings.Contains(fullMethodName, "Register") {
 		return ctx, nil
 	}
@@ -42,7 +43,7 @@ func (i ImplServer) AuthFuncOverride(ctx context.Context, fullMethodName string)
 	return authorization.AuthInterceptor(ctx) // 验证token
 }
 
-func (i ImplServer) GetID(ctx context.Context) (string, error) {
+func (i *ImplServer) GetID(ctx context.Context) (string, error) {
 	headers, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return "", errs.ErrMetaDataNotFound
@@ -56,7 +57,7 @@ func (i ImplServer) GetID(ctx context.Context) (string, error) {
 	}
 }
 
-func (i ImplServer) GetName(ctx context.Context) (string, error) {
+func (i *ImplServer) GetName(ctx context.Context) (string, error) {
 	if id, err := i.GetID(ctx); err != nil {
 		return "", err
 	} else {
@@ -64,7 +65,7 @@ func (i ImplServer) GetName(ctx context.Context) (string, error) {
 	}
 }
 
-func (i ImplServer) GetRoomInfo(ctx context.Context) (*room.Info, error) {
+func (i *ImplServer) GetRoomInfo(ctx context.Context) (*room.Info, error) {
 	if id, err := i.GetID(ctx); err != nil {
 		return nil, err
 	} else if p, ok := i.players[id]; !ok {
@@ -78,7 +79,7 @@ func (i ImplServer) GetRoomInfo(ctx context.Context) (*room.Info, error) {
 	}
 }
 
-func (i ImplServer) GetSeat(ctx context.Context) (int, error) {
+func (i *ImplServer) GetSeat(ctx context.Context) (int, error) {
 	if id, err := i.GetID(ctx); err != nil {
 		return 0, err
 	} else if p, ok := i.players[id]; !ok {
@@ -92,7 +93,7 @@ func (i ImplServer) GetSeat(ctx context.Context) (int, error) {
 	}
 }
 
-func (i ImplServer) GetIDBySeat(ctx context.Context, seat int) (string, error) {
+func (i *ImplServer) GetIDBySeat(ctx context.Context, seat int) (string, error) {
 	if id, err := i.GetID(ctx); err != nil {
 		return "", err
 	} else if p, ok := i.players[id]; !ok {
@@ -108,7 +109,7 @@ func (i ImplServer) GetIDBySeat(ctx context.Context, seat int) (string, error) {
 	}
 }
 
-func (i ImplServer) getPlayer(ctx context.Context) (*player.Player, error) {
+func (i *ImplServer) getPlayer(ctx context.Context) (*player.Player, error) {
 	pid, err := i.GetID(ctx)
 	if err != nil {
 		return nil, err
@@ -120,7 +121,7 @@ func (i ImplServer) getPlayer(ctx context.Context) (*player.Player, error) {
 	return p, nil
 }
 
-func (i ImplServer) getRoom(ctx context.Context) (*room.Room, error) {
+func (i *ImplServer) getRoom(ctx context.Context) (*room.Room, error) {
 	p, err := i.getPlayer(ctx)
 	if err != nil {
 		return nil, err
@@ -132,12 +133,14 @@ func (i ImplServer) getRoom(ctx context.Context) (*room.Room, error) {
 	return r, nil
 }
 
-func (i ImplServer) Login(ctx context.Context, request *LoginRequest) (reply *LoginReply, err error) {
+func (i *ImplServer) Login(ctx context.Context, request *LoginRequest) (reply *LoginReply, err error) {
 	id, err := global.IDGenerator.GeneratePlayerID()
 	if err != nil {
 		return nil, err
 	}
+	i.lock.Lock()
 	i.players[id] = player.NewPlayer(id, request.Name)
+	i.lock.Unlock()
 	// add id to header
 	header := metadata.New(map[string]string{"id": id})
 	ctx = metadata.NewOutgoingContext(ctx, header)
@@ -146,7 +149,7 @@ func (i ImplServer) Login(ctx context.Context, request *LoginRequest) (reply *Lo
 	}, nil
 }
 
-func (i ImplServer) Logout(ctx context.Context) error {
+func (i *ImplServer) Logout(ctx context.Context) error {
 	if id, err := i.GetID(ctx); err != nil {
 		return err
 	} else {
@@ -160,15 +163,19 @@ func (i ImplServer) Logout(ctx context.Context) error {
 			}
 			if r.IsEmpty() {
 				global.Log.Infof("room id: %s is empty, delete", r.ID)
+				i.lock.Lock()
 				delete(i.rooms, roomID)
+				i.lock.Unlock()
 			}
 		}
+		i.lock.Lock()
 		delete(i.players, id)
+		i.lock.Unlock()
 		return nil
 	}
 }
 
-func (i ImplServer) Register(ctx context.Context, request *RegisterRequest) (reply *RegisterReply, err error) {
+func (i *ImplServer) Register(ctx context.Context, request *RegisterRequest) (reply *RegisterReply, err error) {
 	id, err := global.IDGenerator.GeneratePlayerID()
 	if err != nil {
 		return nil, err
@@ -179,7 +186,7 @@ func (i ImplServer) Register(ctx context.Context, request *RegisterRequest) (rep
 	}, nil
 }
 
-func (i ImplServer) CreateRoom(ctx context.Context, request *CreateRoomRequest) (reply *CreateRoomReply, err error) {
+func (i *ImplServer) CreateRoom(ctx context.Context, request *CreateRoomRequest) (reply *CreateRoomReply, err error) {
 	pid, err := i.GetID(ctx)
 	if err != nil {
 		return nil, err
@@ -192,13 +199,15 @@ func (i ImplServer) CreateRoom(ctx context.Context, request *CreateRoomRequest) 
 	if err != nil {
 		return nil, err
 	}
+	i.lock.Lock()
 	i.rooms[rid] = r
+	i.lock.Unlock()
 	return &CreateRoomReply{
 		RoomInfo: r.GetInfo(),
 	}, nil
 }
 
-func (i ImplServer) JoinRoom(ctx context.Context, request *JoinRoomRequest) (joinReply *JoinRoomReply, err error) {
+func (i *ImplServer) JoinRoom(ctx context.Context, request *JoinRoomRequest) (joinReply *JoinRoomReply, err error) {
 	p, err := i.getPlayer(ctx)
 	if err != nil {
 		return nil, err
@@ -217,7 +226,7 @@ func (i ImplServer) JoinRoom(ctx context.Context, request *JoinRoomRequest) (joi
 	}, nil
 }
 
-func (i ImplServer) ListRooms(ctx context.Context, request *ListRoomsRequest) (reply *ListRoomsReply, err error) {
+func (i *ImplServer) ListRooms(ctx context.Context, request *ListRoomsRequest) (reply *ListRoomsReply, err error) {
 	roomInfos := make([]*room.Info, 0)
 	filter := request.RoomNameFilter
 	for _, r := range i.rooms {
@@ -232,7 +241,7 @@ func (i ImplServer) ListRooms(ctx context.Context, request *ListRoomsRequest) (r
 	}, nil
 }
 
-func (i ImplServer) GetReady(ctx context.Context) (reply *GetReadyReply, err error) {
+func (i *ImplServer) GetReady(ctx context.Context) (reply *GetReadyReply, err error) {
 	p, err := i.getPlayer(ctx)
 	if err != nil {
 		return nil, err
@@ -246,7 +255,7 @@ func (i ImplServer) GetReady(ctx context.Context) (reply *GetReadyReply, err err
 	}, nil
 }
 
-func (i ImplServer) CancelReady(ctx context.Context) (reply *CancelReadyReply, err error) {
+func (i *ImplServer) CancelReady(ctx context.Context) (reply *CancelReadyReply, err error) {
 	p, err := i.getPlayer(ctx)
 	if err != nil {
 		return nil, err
@@ -260,7 +269,7 @@ func (i ImplServer) CancelReady(ctx context.Context) (reply *CancelReadyReply, e
 	}, nil
 }
 
-func (i ImplServer) LeaveRoom(ctx context.Context) (reply *PlayerLeaveReply, err error) {
+func (i *ImplServer) LeaveRoom(ctx context.Context) (reply *PlayerLeaveReply, err error) {
 	p, err := i.getPlayer(ctx)
 	seat := p.Seat
 	if err != nil {
@@ -279,7 +288,9 @@ func (i ImplServer) LeaveRoom(ctx context.Context) (reply *PlayerLeaveReply, err
 	}
 	if r.IsEmpty() {
 		global.Log.Infof("room id: %s is empty, delete", r.ID)
+		i.lock.Lock()
 		delete(i.rooms, id)
+		i.lock.Unlock()
 	}
 	return &PlayerLeaveReply{
 		Seat:       seat,
@@ -288,7 +299,7 @@ func (i ImplServer) LeaveRoom(ctx context.Context) (reply *PlayerLeaveReply, err
 	}, nil
 }
 
-func (i ImplServer) AddRobot(ctx context.Context, request *AddRobotRequest) (reply *AddRobotReply, err error) {
+func (i *ImplServer) AddRobot(ctx context.Context, request *AddRobotRequest) (reply *AddRobotReply, err error) {
 	p, err := i.getPlayer(ctx)
 	if err != nil {
 		return nil, err
@@ -313,7 +324,7 @@ func (i ImplServer) AddRobot(ctx context.Context, request *AddRobotRequest) (rep
 	}, nil
 }
 
-func (i ImplServer) RemovePlayer(ctx context.Context, request *RemovePlayerRequest) (reply *PlayerLeaveReply, err error) {
+func (i *ImplServer) RemovePlayer(ctx context.Context, request *RemovePlayerRequest) (reply *PlayerLeaveReply, err error) {
 	p, err := i.getPlayer(ctx)
 	if err != nil {
 		return nil, err
@@ -344,7 +355,7 @@ func (i ImplServer) RemovePlayer(ctx context.Context, request *RemovePlayerReque
 	}, nil
 }
 
-func (i ImplServer) ListRobots(ctx context.Context) (reply *ListRobotsReply, err error) {
+func (i *ImplServer) ListRobots(ctx context.Context) (reply *ListRobotsReply, err error) {
 	_, err = i.getRoom(ctx)
 	if err != nil {
 		return nil, err
@@ -355,7 +366,7 @@ func (i ImplServer) ListRobots(ctx context.Context) (reply *ListRobotsReply, err
 	}, nil
 }
 
-func (i ImplServer) RegisterRobot(ctx context.Context, request *RegisterRobotRequest) (reply *RegisterRobotReply, err error) {
+func (i *ImplServer) RegisterRobot(ctx context.Context, request *RegisterRobotRequest) (reply *RegisterRobotReply, err error) {
 	p, ok := peer.FromContext(ctx)
 	if !ok {
 		return nil, errors.New("peer not found")
@@ -383,7 +394,7 @@ func (i ImplServer) RegisterRobot(ctx context.Context, request *RegisterRobotReq
 	}, nil
 }
 
-func (i ImplServer) UnRegisterRobot(ctx context.Context, robotName string) (err error) {
+func (i *ImplServer) UnRegisterRobot(ctx context.Context, robotName string) (err error) {
 	p, ok := peer.FromContext(ctx)
 	if !ok {
 		return errors.New("peer not found")
@@ -412,7 +423,7 @@ func (i ImplServer) UnRegisterRobot(ctx context.Context, robotName string) (err 
 	return nil
 }
 
-func (i ImplServer) ListPlayerIDs(ctx context.Context) (reply *ListPlayerIDsReply, err error) {
+func (i *ImplServer) ListPlayerIDs(ctx context.Context) (reply *ListPlayerIDsReply, err error) {
 	r, err := i.getRoom(ctx)
 	if err != nil {
 		return nil, err
@@ -429,7 +440,7 @@ func (i ImplServer) ListPlayerIDs(ctx context.Context) (reply *ListPlayerIDsRepl
 	}, nil
 }
 
-func (i ImplServer) StartGame(ctx context.Context, request *StartGameRequest) (reply *StartGameReply, err error) {
+func (i *ImplServer) StartGame(ctx context.Context, request *StartGameRequest) (reply *StartGameReply, err error) {
 	p, err := i.getPlayer(ctx)
 	if err != nil {
 		return nil, err
@@ -453,7 +464,7 @@ func (i ImplServer) StartGame(ctx context.Context, request *StartGameRequest) (r
 	}, nil
 }
 
-func (i ImplServer) StartStream(ctx context.Context, request *StreamRequest) (reply *StreamReply, err error) {
+func (i *ImplServer) StartStream(ctx context.Context, request *StreamRequest) (reply *StreamReply, err error) {
 	p, err := i.getPlayer(ctx)
 	if err != nil {
 		return nil, err
@@ -471,7 +482,7 @@ func (i ImplServer) StartStream(ctx context.Context, request *StreamRequest) (re
 	}, nil
 }
 
-func (i ImplServer) GetBoardState(ctx context.Context) (*mahjong.BoardState, error) {
+func (i *ImplServer) GetBoardState(ctx context.Context) (*mahjong.BoardState, error) {
 	p, err := i.getPlayer(ctx)
 	if err != nil {
 		return nil, err
