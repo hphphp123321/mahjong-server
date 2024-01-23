@@ -1,7 +1,5 @@
 #!/bin/bash
 
-#!/bin/bash
-
 # 读取 YAML 文件并获取 port 值
 PORT=$(yq e '.server.port' ./config/app.yaml)
 

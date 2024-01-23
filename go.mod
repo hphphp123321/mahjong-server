@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/google/uuid v1.3.0
 	github.com/hphphp123321/go-common v0.0.0-20230419113915-7ac9d9c533b6
-	github.com/hphphp123321/mahjong-go v0.0.0-20231101074904-04b1b2984779
+	github.com/hphphp123321/mahjong-go v0.0.0-20240123193116-930f13e224dd
 	github.com/sashabaranov/go-openai v1.16.0
 	github.com/sirupsen/logrus v1.9.0
 	go.uber.org/zap v1.24.0
@@ -13,6 +13,12 @@ require (
 	google.golang.org/protobuf v1.30.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
+)
+
+require (
+	github.com/kr/pretty v0.1.0 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
+	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 )
 
 require (
@@ -24,7 +30,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
-	go.uber.org/multierr v1.6.0 // indirect
+	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
