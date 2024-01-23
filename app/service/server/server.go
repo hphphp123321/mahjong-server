@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/hphphp123321/mahjong-server/app/api/middleware/interceptor/authorization"
 	"net"
 	"regexp"
+	"strings"
 
 	"github.com/hphphp123321/mahjong-go/mahjong"
 	"github.com/hphphp123321/mahjong-server/app/errs"
@@ -16,6 +18,8 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
 )
+
+var _ Server = (*ImplServer)(nil)
 
 type ImplServer struct {
 	Server
@@ -28,6 +32,14 @@ func NewImplServer() *ImplServer {
 		players: map[string]*player.Player{},
 		rooms:   map[string]*room.Room{},
 	}
+}
+
+func (i ImplServer) AuthFuncOverride(ctx context.Context, fullMethodName string) (context.Context, error) {
+	if strings.Contains(fullMethodName, "Login") || strings.Contains(fullMethodName, "Register") {
+		return ctx, nil
+	}
+
+	return authorization.AuthInterceptor(ctx) // 验证token
 }
 
 func (i ImplServer) GetID(ctx context.Context) (string, error) {
@@ -154,6 +166,17 @@ func (i ImplServer) Logout(ctx context.Context) error {
 		delete(i.players, id)
 		return nil
 	}
+}
+
+func (i ImplServer) Register(ctx context.Context, request *RegisterRequest) (reply *RegisterReply, err error) {
+	id, err := global.IDGenerator.GeneratePlayerID()
+	if err != nil {
+		return nil, err
+	}
+	//u := query.User
+	return &RegisterReply{
+		ID: id,
+	}, nil
 }
 
 func (i ImplServer) CreateRoom(ctx context.Context, request *CreateRoomRequest) (reply *CreateRoomReply, err error) {

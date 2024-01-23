@@ -3,10 +3,13 @@ package grpcloader
 import (
 	"context"
 	"fmt"
+	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	"github.com/hphphp123321/mahjong-server/app/api/middleware/interceptor/authorization"
 	"net"
+	"strings"
 	"time"
 
-	"github.com/hphphp123321/mahjong-server/app/api/middleware/interceptor/logger"
+	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	pb "github.com/hphphp123321/mahjong-server/app/api/v1/mahjong"
 	"github.com/hphphp123321/mahjong-server/app/controller"
 	"github.com/hphphp123321/mahjong-server/app/global"
@@ -47,12 +50,26 @@ func (loader *GrpcLoader) Load(ctx context.Context, env map[string]string) error
 		PermitWithoutStream: true,
 	}
 
+	// zap logger grpc中间件配置
+	zapOptions := []grpc_zap.Option{
+		grpc_zap.WithDecider(func(fullMethodName string, err error) bool {
+			if strings.Contains(fullMethodName, "Ping") {
+				return false
+			}
+			return true
+		},
+		),
+	}
+
 	s := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
-			logger.UnaryServerInterceptor(),
+			//logger.UnaryServerInterceptor(),
+			grpc_zap.UnaryServerInterceptor(global.Log.Desugar(), zapOptions...),
+			grpc_auth.UnaryServerInterceptor(authorization.AuthInterceptor),
 		),
 		grpc.ChainStreamInterceptor(
-			logger.StreamServerInterceptor(),
+			//logger.StreamServerInterceptor(),
+			grpc_zap.StreamServerInterceptor(global.Log.Desugar(), zapOptions...),
 		),
 		grpc.KeepaliveEnforcementPolicy(kaep),
 		grpc.KeepaliveParams(kasp),

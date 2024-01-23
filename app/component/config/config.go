@@ -6,11 +6,11 @@ type App struct {
 }
 
 type Openai struct {
-	BaseURL  string `yaml:"baseURL"`
-	Key      string `yaml:"key"`
-	Models    []string `yaml:"models"`
-	Lang     string `yaml:"lang"`
-	ProxyUrl string `yaml:"proxyUrl"`
+	BaseURL  string   `yaml:"baseURL"`
+	Key      string   `yaml:"key"`
+	Models   []string `yaml:"models"`
+	Lang     string   `yaml:"lang"`
+	ProxyUrl string   `yaml:"proxyUrl"`
 }
 
 type LogConfig struct {
@@ -19,6 +19,14 @@ type LogConfig struct {
 	MaxSize    int    `yaml:"maxSize"`    // 单文件最大尺寸 MB
 	MaxAge     int    `yaml:"maxAge"`     // 最多保存天数day
 	MaxBackups int    `yaml:"maxBackups"` // 最大备份文件数量
+}
+
+type DBConfig struct {
+	Host     string `yaml:"host"`
+	Port     string `yaml:"port"`
+	UserName string `yaml:"username"`
+	Password string `yaml:"password"`
+	DBName   string `yaml:"dbName"`
 }
 
 type Server struct {
@@ -37,4 +45,5 @@ type Config struct {
 	Openai    *Openai    `yaml:"openai"`
 	LogConfig *LogConfig `yaml:"log-config"`
 	Server    *Server    `yaml:"server"`
+	DBConfig  *DBConfig  `yaml:"db-config"`
 }

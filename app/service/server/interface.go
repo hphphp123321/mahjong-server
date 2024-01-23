@@ -7,6 +7,8 @@ import (
 )
 
 type Server interface {
+	AuthFuncOverride(ctx context.Context, fullMethodName string) (context.Context, error)
+
 	GetID(ctx context.Context) (string, error)
 	GetName(ctx context.Context) (string, error)
 	GetRoomInfo(ctx context.Context) (*room.Info, error)
@@ -16,6 +18,7 @@ type Server interface {
 
 	Login(ctx context.Context, request *LoginRequest) (reply *LoginReply, err error)
 	Logout(ctx context.Context) error
+	Register(ctx context.Context, request *RegisterRequest) (reply *RegisterReply, err error)
 	CreateRoom(ctx context.Context, request *CreateRoomRequest) (reply *CreateRoomReply, err error)
 	JoinRoom(ctx context.Context, request *JoinRoomRequest) (joinReply *JoinRoomReply, err error)
 	ListRooms(ctx context.Context, request *ListRoomsRequest) (reply *ListRoomsReply, err error)

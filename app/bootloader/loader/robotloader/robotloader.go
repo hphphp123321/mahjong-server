@@ -37,7 +37,7 @@ func (loader *RobotLoader) Load(ctx context.Context, env map[string]string) erro
 }
 
 func (loader *RobotLoader) Name() string {
-	return "Robot Register Loader"
+	return "RobotLoader"
 }
 
 func (loader *RobotLoader) Require() []string {

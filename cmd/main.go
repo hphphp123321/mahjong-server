@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/hphphp123321/mahjong-server/app/bootloader"
 	"github.com/hphphp123321/mahjong-server/app/bootloader/loaderlist/defaultloader"
+	"github.com/hphphp123321/mahjong-server/app/dao"
 	"github.com/hphphp123321/mahjong-server/app/global"
 	"log"
 	"os"
@@ -29,5 +30,8 @@ func main() {
 		log.Println("Received signal to exit")
 	}
 	cancel()
+	if err := dao.Close(); err != nil {
+		log.Println("dao close error:", err)
+	}
 	time.Sleep(time.Second * 1)
 }

@@ -12,6 +12,8 @@ service Mahjong {
 
   rpc Logout (Empty) returns (LogoutReply) {}
 
+  rpc Register (RegisterRequest) returns (RegisterReply) {}
+
   rpc CreateRoom (CreateRoomRequest) returns (CreateRoomReply) {}
 
   rpc JoinRoom (JoinRoomRequest) returns (JoinRoomReply) {}
@@ -33,16 +35,29 @@ message Empty {}
 
 message LoginRequest {
   string playerName = 1;
+  string password = 2;
 }
 
 message LoginReply {
   string message = 1;
   string id = 2;
-  optional ReconnectInfo reconnectInfo = 3;
+  string token = 3;
+  optional ReconnectInfo reconnectInfo = 4;
 }
 
 message LogoutReply {
   string message = 1;
+}
+
+message RegisterRequest {
+  string playerName = 1;
+  string password = 2;
+}
+
+message RegisterReply {
+  string message = 1;
+  string id = 2;
+  string token = 3;
 }
 
 message ReconnectInfo {

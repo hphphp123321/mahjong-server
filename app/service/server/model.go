@@ -12,7 +12,18 @@ type LoginRequest struct {
 }
 
 type LoginReply struct {
-	ID string
+	ID    string
+	Token string
+}
+
+type RegisterRequest struct {
+	Name     string
+	Password string
+}
+
+type RegisterReply struct {
+	ID    string
+	Token string
 }
 
 type CreateRoomRequest struct {
