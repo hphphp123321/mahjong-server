@@ -3,8 +3,8 @@ package dbloader
 import (
 	"context"
 	"github.com/hphphp123321/mahjong-server/app/dao"
-	"github.com/hphphp123321/mahjong-server/app/entity"
-	"github.com/hphphp123321/mahjong-server/app/query"
+	entity2 "github.com/hphphp123321/mahjong-server/app/dao/entity"
+	"github.com/hphphp123321/mahjong-server/app/dao/query"
 )
 
 type DBLoader struct {
@@ -16,9 +16,9 @@ func (D DBLoader) Load(ctx context.Context, env map[string]string) error {
 	}
 
 	// 自动迁移
-	dao.GormDB.AutoMigrate(&entity.User{})
-	dao.GormDB.AutoMigrate(&entity.Log{})
-	dao.GormDB.AutoMigrate(&entity.UserLog{})
+	dao.GormDB.AutoMigrate(&entity2.User{})
+	dao.GormDB.AutoMigrate(&entity2.Log{})
+	dao.GormDB.AutoMigrate(&entity2.UserLog{})
 
 	// Query初始化
 	query.SetDefault(dao.GormDB)

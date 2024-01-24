@@ -6,6 +6,10 @@ func LoginMsg(id string) string {
 	return "Player Login, ID: " + id
 }
 
+func RegisterMsg(id string) string {
+	return "Player Register, ID: " + id
+}
+
 func LogoutMsg() string {
 	return "Player Logout"
 }

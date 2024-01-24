@@ -116,7 +116,7 @@ func (r *Room) IsEmpty() bool {
 		return true
 	}
 	for _, p := range r.Players {
-		if p.ID != "" {
+		if p.ID != 0 {
 			return false
 		}
 	}
@@ -143,12 +143,12 @@ func (r *Room) GetInfo() *Info {
 	}
 }
 
-func (r *Room) ListPlayerIDs() []string {
+func (r *Room) ListPlayerIDs() []uint {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	var playerIDs []string
+	var playerIDs []uint
 	for _, p := range r.Players {
-		if p.ID != "" {
+		if p.ID != 0 {
 			playerIDs = append(playerIDs, p.ID)
 		}
 	}
@@ -189,7 +189,7 @@ func (r *Room) changeOwner() {
 		return
 	}
 	for _, p := range r.Players {
-		if p.ID != "" && p.Seat != r.OwnerSeat {
+		if p.ID != 0 && p.Seat != r.OwnerSeat {
 			r.OwnerSeat = p.Seat
 			return
 		}
@@ -197,7 +197,7 @@ func (r *Room) changeOwner() {
 	return
 }
 
-func (r *Room) StartGame(rule *mahjong.Rule, mode int) ([]int, error) {
+func (r *Room) StartGame(rule *mahjong.Rule, mode int) (*GameInfo, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if len(r.Players) != 4 {
@@ -222,7 +222,7 @@ func (r *Room) StartGame(rule *mahjong.Rule, mode int) ([]int, error) {
 
 	// Start robot
 	for seat, p := range r.Players {
-		if p.ID != "" {
+		if p.ID != 0 {
 			continue
 		}
 		if robot, ok := global.RobotRegistry.GetRobot(p.Name); !ok {
@@ -235,8 +235,13 @@ func (r *Room) StartGame(rule *mahjong.Rule, mode int) ([]int, error) {
 	}
 
 	// Start Game
-	r.gameRoom.StartGame(mode, r.CancelHumanPlayersReady)
-	return seatsToShuffle, nil
+	gameID, _ := global.IDGenerator.GenerateGameID()
+	result := r.gameRoom.StartGame(mode, r.CancelHumanPlayersReady)
+	return &GameInfo{
+		GameID:     gameID,
+		SeatsOrder: seatsToShuffle,
+		Result:     result,
+	}, nil
 }
 
 func (r *Room) StartGameStream(p *player.Player, action chan *mahjong.Call) chan *player.GameEventChannel {
@@ -255,7 +260,7 @@ func (r *Room) GetBoardState(p *player.Player) (*mahjong.BoardState, error) {
 
 func (r *Room) CancelHumanPlayersReady() {
 	for _, p := range r.Players {
-		if p.ID != "" {
+		if p.ID != 0 {
 			p.Ready = false
 		}
 	}

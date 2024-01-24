@@ -7,12 +7,12 @@ type Player struct {
 	RoomID string
 	Seat   int
 
-	ID string
+	ID uint
 
 	Ready bool
 }
 
-func NewPlayer(id string, name string) *Player {
+func NewPlayer(id uint, name string) *Player {
 	return &Player{
 		ID:   id,
 		Name: name,
@@ -21,7 +21,7 @@ func NewPlayer(id string, name string) *Player {
 
 func NewRobot(robotType string) *Player {
 	return &Player{
-		ID:    "",
+		ID:    0,
 		Name:  robotType,
 		Ready: true,
 	}

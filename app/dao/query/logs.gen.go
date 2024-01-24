@@ -16,7 +16,7 @@ import (
 
 	"gorm.io/plugin/dbresolver"
 
-	"github.com/hphphp123321/mahjong-server/app/entity"
+	"github.com/hphphp123321/mahjong-server/app/dao/entity"
 )
 
 func newLog(db *gorm.DB, opts ...gen.DOOption) log {
@@ -27,7 +27,7 @@ func newLog(db *gorm.DB, opts ...gen.DOOption) log {
 
 	tableName := _log.logDo.TableName()
 	_log.ALL = field.NewAsterisk(tableName)
-	_log.ID = field.NewUint(tableName, "id")
+	_log.ID = field.NewString(tableName, "id")
 	_log.CreatedAt = field.NewTime(tableName, "created_at")
 	_log.UpdatedAt = field.NewTime(tableName, "updated_at")
 	_log.DeletedAt = field.NewField(tableName, "deleted_at")
@@ -60,7 +60,7 @@ type log struct {
 	logDo logDo
 
 	ALL       field.Asterisk
-	ID        field.Uint
+	ID        field.String
 	CreatedAt field.Time
 	UpdatedAt field.Time
 	DeletedAt field.Field
@@ -82,7 +82,7 @@ func (l log) As(alias string) *log {
 
 func (l *log) updateTableName(table string) *log {
 	l.ALL = field.NewAsterisk(table)
-	l.ID = field.NewUint(table, "id")
+	l.ID = field.NewString(table, "id")
 	l.CreatedAt = field.NewTime(table, "created_at")
 	l.UpdatedAt = field.NewTime(table, "updated_at")
 	l.DeletedAt = field.NewField(table, "deleted_at")

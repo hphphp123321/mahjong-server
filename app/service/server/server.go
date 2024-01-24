@@ -2,12 +2,14 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/hphphp123321/mahjong-server/app/api/middleware/interceptor/authorization"
+	"github.com/hphphp123321/mahjong-server/app/dao/entity"
+	"github.com/hphphp123321/mahjong-server/app/dao/query"
 	"net"
 	"regexp"
-	"strings"
+	"strconv"
 	"sync"
 
 	"github.com/hphphp123321/mahjong-go/mahjong"
@@ -22,7 +24,7 @@ import (
 
 type ImplServer struct {
 	Server
-	players map[string]*player.Player
+	players map[uint]*player.Player
 	rooms   map[string]*room.Room
 
 	lock sync.Mutex
@@ -30,35 +32,41 @@ type ImplServer struct {
 
 func NewImplServer() *ImplServer {
 	return &ImplServer{
-		players: map[string]*player.Player{},
+		players: map[uint]*player.Player{},
 		rooms:   map[string]*room.Room{},
 	}
 }
 
-func (i *ImplServer) AuthFuncOverride(ctx context.Context, fullMethodName string) (context.Context, error) {
-	if strings.Contains(fullMethodName, "Login") || strings.Contains(fullMethodName, "Register") {
-		return ctx, nil
+func (i *ImplServer) GetID(ctx context.Context) (string, error) {
+	id, err := i.getID(ctx)
+	if err != nil {
+		return "", err
 	}
-
-	return authorization.AuthInterceptor(ctx) // 验证token
+	return strconv.Itoa(int(id)), nil
 }
 
-func (i *ImplServer) GetID(ctx context.Context) (string, error) {
+func (i *ImplServer) getID(ctx context.Context) (uint, error) {
 	headers, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return "", errs.ErrMetaDataNotFound
+		return 0, errs.ErrMetaDataNotFound
 	}
-	if id, ok := headers["id"]; !ok {
-		return "", errs.ErrHeaderIDNotFound
-	} else if _, ok = i.players[id[0]]; !ok {
-		return "", errs.ErrPlayerNotFound
+	id, ok := headers["id"]
+	if !ok {
+		return 0, errs.ErrHeaderIDNotFound
+	}
+	uid, err := ConvertStringToUInt(id[0])
+	if err != nil {
+		return 0, err
+	}
+	if _, ok = i.players[uid]; !ok {
+		return 0, errs.ErrPlayerNotFound
 	} else {
-		return id[0], nil
+		return uid, nil
 	}
 }
 
 func (i *ImplServer) GetName(ctx context.Context) (string, error) {
-	if id, err := i.GetID(ctx); err != nil {
+	if id, err := i.getID(ctx); err != nil {
 		return "", err
 	} else {
 		return i.players[id].Name, nil
@@ -66,7 +74,7 @@ func (i *ImplServer) GetName(ctx context.Context) (string, error) {
 }
 
 func (i *ImplServer) GetRoomInfo(ctx context.Context) (*room.Info, error) {
-	if id, err := i.GetID(ctx); err != nil {
+	if id, err := i.getID(ctx); err != nil {
 		return nil, err
 	} else if p, ok := i.players[id]; !ok {
 		return nil, errs.ErrPlayerNotFound
@@ -80,7 +88,7 @@ func (i *ImplServer) GetRoomInfo(ctx context.Context) (*room.Info, error) {
 }
 
 func (i *ImplServer) GetSeat(ctx context.Context) (int, error) {
-	if id, err := i.GetID(ctx); err != nil {
+	if id, err := i.getID(ctx); err != nil {
 		return 0, err
 	} else if p, ok := i.players[id]; !ok {
 		return 0, errs.ErrPlayerNotFound
@@ -94,7 +102,7 @@ func (i *ImplServer) GetSeat(ctx context.Context) (int, error) {
 }
 
 func (i *ImplServer) GetIDBySeat(ctx context.Context, seat int) (string, error) {
-	if id, err := i.GetID(ctx); err != nil {
+	if id, err := i.getID(ctx); err != nil {
 		return "", err
 	} else if p, ok := i.players[id]; !ok {
 		return "", errs.ErrPlayerNotFound
@@ -105,12 +113,12 @@ func (i *ImplServer) GetIDBySeat(ctx context.Context, seat int) (string, error) 
 	} else if rp, err := r.GetPlayerBySeat(seat); err != nil {
 		return "", err
 	} else {
-		return rp.ID, nil
+		return strconv.Itoa(int(rp.ID)), nil
 	}
 }
 
 func (i *ImplServer) getPlayer(ctx context.Context) (*player.Player, error) {
-	pid, err := i.GetID(ctx)
+	pid, err := i.getID(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -134,23 +142,32 @@ func (i *ImplServer) getRoom(ctx context.Context) (*room.Room, error) {
 }
 
 func (i *ImplServer) Login(ctx context.Context, request *LoginRequest) (reply *LoginReply, err error) {
-	id, err := global.IDGenerator.GeneratePlayerID()
+
+	// 检查用户名是否存在
+	user, err := query.User.WithContext(ctx).Where(query.User.Name.Eq(request.Name)).First()
 	if err != nil {
 		return nil, err
 	}
+
+	// 检查密码是否正确
+	if err := global.PasswordService.Compare([]byte(user.Password), []byte(request.Password)); err != nil {
+		return nil, err
+	}
+
 	i.lock.Lock()
-	i.players[id] = player.NewPlayer(id, request.Name)
+	i.players[user.ID] = player.NewPlayer(user.ID, request.Name)
 	i.lock.Unlock()
 	// add id to header
-	header := metadata.New(map[string]string{"id": id})
+	var ids = strconv.Itoa(int(user.ID))
+	header := metadata.New(map[string]string{"id": ids})
 	ctx = metadata.NewOutgoingContext(ctx, header)
 	return &LoginReply{
-		ID: id,
+		ID: ids,
 	}, nil
 }
 
 func (i *ImplServer) Logout(ctx context.Context) error {
-	if id, err := i.GetID(ctx); err != nil {
+	if id, err := i.getID(ctx); err != nil {
 		return err
 	} else {
 		p := i.players[id]
@@ -180,14 +197,48 @@ func (i *ImplServer) Register(ctx context.Context, request *RegisterRequest) (re
 	if err != nil {
 		return nil, err
 	}
-	//u := query.User
+
+	encryptedPassword, err := global.PasswordService.Encrypt([]byte(request.Password))
+	if err != nil {
+		return nil, err
+	}
+
+	var newUser = &entity.User{
+		ID:       uint(id),
+		Name:     request.Name,
+		Password: string(encryptedPassword),
+		Logs:     nil,
+	}
+	// 检查用户名是否已存在
+	count, err := query.User.WithContext(ctx).Where(query.User.Name.Eq(request.Name)).Count()
+	if err != nil {
+		return nil, err
+	}
+	if count > 0 {
+		return nil, errs.ErrUserNameExist
+	}
+
+	// 创建用户
+	if err := query.User.WithContext(ctx).Create(newUser); err != nil {
+		return nil, err
+	}
+
+	// 创建玩家
+	i.lock.Lock()
+	i.players[uint(id)] = player.NewPlayer(uint(id), request.Name)
+	i.lock.Unlock()
+	// add id to header
+	uid := strconv.Itoa(int(id))
+	header := metadata.New(map[string]string{"id": uid})
+	ctx = metadata.NewOutgoingContext(ctx, header)
+
 	return &RegisterReply{
-		ID: id,
+		ID: uid,
 	}, nil
 }
 
 func (i *ImplServer) CreateRoom(ctx context.Context, request *CreateRoomRequest) (reply *CreateRoomReply, err error) {
-	pid, err := i.GetID(ctx)
+	pid, err := i.getID(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -430,10 +481,10 @@ func (i *ImplServer) ListPlayerIDs(ctx context.Context) (reply *ListPlayerIDsRep
 	}
 	ids := make([]string, 0)
 	for _, p := range r.Players {
-		if p.ID == "" {
+		if p.ID == 0 {
 			continue
 		}
-		ids = append(ids, p.ID)
+		ids = append(ids, strconv.Itoa(int(p.ID)))
 	}
 	return &ListPlayerIDsReply{
 		PlayerIDs: ids,
@@ -455,12 +506,13 @@ func (i *ImplServer) StartGame(ctx context.Context, request *StartGameRequest) (
 	if p.Seat != r.OwnerSeat {
 		return nil, errs.ErrPlayerNotOwner
 	}
-	seatsOrder, err := r.StartGame(request.Rule, request.Mode)
+	gameInfo, err := r.StartGame(request.Rule, request.Mode)
 	if err != nil {
 		return nil, err
 	}
+	i.ProcessGameResult(ctx, gameInfo) // start process game result
 	return &StartGameReply{
-		SeatsOrder: seatsOrder,
+		SeatsOrder: gameInfo.SeatsOrder,
 	}, nil
 }
 
@@ -495,4 +547,65 @@ func (i *ImplServer) GetBoardState(ctx context.Context) (*mahjong.BoardState, er
 		return nil, errs.ErrRoomNotFound
 	}
 	return r.GetBoardState(p)
+}
+
+func (i *ImplServer) ProcessGameResult(ctx context.Context, gameInfo *room.GameInfo) {
+	pRoom, err := i.getRoom(ctx)
+	if err != nil {
+		return
+	}
+	var result = gameInfo.Result
+	var gameID = gameInfo.GameID
+	go func() {
+		select {
+		case r := <-result:
+			if r.Err != nil {
+				global.Log.Warnf("game end error: %v", r.Err)
+				return
+			}
+			global.Log.Debugln("game end")
+			var playerIDs = [4]uint{0, 0, 0, 0}
+			var players = [4]string{"", "", "", ""}
+			for _, p := range pRoom.Players {
+				pSeat := p.Seat
+				pOrder := r.Seat2Order[pSeat]
+				if p.ID != 0 {
+					playerIDs[pOrder] = p.ID
+				}
+				players[pOrder] = p.Name
+			}
+
+			// log in database
+			var logContent = &LogContent{
+				Players:   players,
+				PlayerIDs: playerIDs,
+				Events:    r.AllEvents,
+			}
+			logContentJson, err := json.Marshal(logContent)
+			if err != nil {
+				global.Log.Warnf("marshal log content error: %v", err)
+				return
+			}
+
+			var entityUsers = make([]*entity.User, 0)
+			for _, pID := range pRoom.ListPlayerIDs() {
+				user, err := query.User.WithContext(ctx).Where(query.User.ID.Eq(pID)).First()
+				if err != nil {
+					global.Log.Warnf("get user error: %v", err)
+					continue
+				}
+				entityUsers = append(entityUsers, user)
+			}
+			var entityLog = &entity.Log{
+				ID:      gameID,
+				Content: string(logContentJson),
+				Users:   entityUsers,
+			}
+
+			if err := query.Log.WithContext(ctx).Create(entityLog); err != nil {
+				global.Log.Warnf("create log error: %v", err)
+				return
+			}
+		}
+	}()
 }

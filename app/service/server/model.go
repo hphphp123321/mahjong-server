@@ -8,12 +8,12 @@ import (
 )
 
 type LoginRequest struct {
-	Name string
+	Name     string
+	Password string
 }
 
 type LoginReply struct {
-	ID    string
-	Token string
+	ID string
 }
 
 type RegisterRequest struct {
@@ -22,8 +22,7 @@ type RegisterRequest struct {
 }
 
 type RegisterReply struct {
-	ID    string
-	Token string
+	ID string
 }
 
 type CreateRoomRequest struct {
@@ -115,4 +114,10 @@ type StreamRequest struct {
 
 type StreamReply struct {
 	Events chan *player.GameEventChannel
+}
+
+type LogContent struct {
+	Players   [4]string      `json:"players"`    // 四个玩家的名字
+	PlayerIDs [4]uint        `json:"player_ids"` // 四个玩家的ID
+	Events    mahjong.Events `json:"events"`     // 事件
 }

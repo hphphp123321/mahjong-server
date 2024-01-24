@@ -2,6 +2,8 @@ package controller
 
 import (
 	"context"
+	"github.com/hphphp123321/mahjong-server/app/api/middleware/interceptor/authorization"
+	"strings"
 	"sync"
 
 	mahjong "github.com/hphphp123321/mahjong-server/app/api/v1/mahjong"
@@ -15,13 +17,32 @@ type MahjongServer struct {
 	s server.Server
 
 	clients sync.Map
+
+	methodsAuthExclude []string
 }
 
 func NewMahjongServer(s server.Server) *MahjongServer {
 	return &MahjongServer{
 		s: s,
 		// clients: make(map[string]*Client),
+		methodsAuthExclude: []string{
+			"Login",
+			"Logout",
+			"Register",
+			"Ping",
+			"RegisterRobot",
+		},
 	}
+}
+
+func (m *MahjongServer) AuthFuncOverride(ctx context.Context, fullMethodName string) (context.Context, error) {
+	for _, method := range m.methodsAuthExclude {
+		if strings.HasSuffix(fullMethodName, method) { // 不需要验证token的方法
+			return ctx, nil
+		}
+	}
+
+	return authorization.AuthInterceptor(ctx) // 验证token
 }
 
 func (m *MahjongServer) Ping(ctx context.Context, empty *mahjong.Empty) (*mahjong.Empty, error) {
@@ -30,8 +51,12 @@ func (m *MahjongServer) Ping(ctx context.Context, empty *mahjong.Empty) (*mahjon
 
 func (m *MahjongServer) Login(ctx context.Context, request *mahjong.LoginRequest) (*mahjong.LoginReply, error) {
 	reply, err := m.s.Login(ctx, &server.LoginRequest{
-		Name: request.PlayerName,
+		Name:     request.PlayerName,
+		Password: request.Password,
 	})
+	if err != nil {
+		return nil, err
+	}
 	cid := reply.ID
 	c := NewClient(cid)
 	m.clients.Store(cid, c)
@@ -39,7 +64,29 @@ func (m *MahjongServer) Login(ctx context.Context, request *mahjong.LoginRequest
 	if err != nil {
 		return nil, err
 	}
-	return ToPbLoginReply(reply), nil
+	// 生成JWT TOKEN
+	token, err := authorization.GenerateToken(cid)
+	return ToPbLoginReply(reply, token), nil
+}
+
+func (m *MahjongServer) Register(ctx context.Context, request *mahjong.RegisterRequest) (*mahjong.RegisterReply, error) {
+	reply, err := m.s.Register(ctx, &server.RegisterRequest{
+		Name:     request.PlayerName,
+		Password: request.Password,
+	})
+	if err != nil {
+		return nil, err
+	}
+	cid := reply.ID
+	c := NewClient(cid)
+	m.clients.Store(cid, c)
+	c.Login()
+	if err != nil {
+		return nil, err
+	}
+	// 生成JWT TOKEN
+	token, err := authorization.GenerateToken(cid)
+	return ToPbRegisterReply(reply, token), nil
 }
 
 func (m *MahjongServer) Logout(ctx context.Context, empty *mahjong.Empty) (*mahjong.LogoutReply, error) {

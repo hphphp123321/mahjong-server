@@ -66,6 +66,11 @@ func InitMySql() (err error) {
 		return err
 	}
 
+	// 创建数据库表
+	if err := createTables(GormDB); err != nil {
+		return err
+	}
+
 	// 验证数据库连接是否成功
 	DB, err = GormDB.DB()
 	if err != nil {
@@ -77,4 +82,56 @@ func InitMySql() (err error) {
 // Close 关闭数据库连接
 func Close() error {
 	return DB.Close()
+}
+
+// 创建数据库表
+func createTables(db *gorm.DB) (err error) {
+	// 创建 users 表
+	err = db.Exec(`
+        CREATE TABLE IF NOT EXISTS users (
+            id int(50) UNSIGNED NOT NULL,
+            name varchar(255) NOT NULL,
+            password varchar(255) NOT NULL,
+            created_at datetime NOT NULL,
+            updated_at datetime NOT NULL,
+            deleted_at datetime DEFAULT NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY name (name)
+        ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户表';
+    `).Error
+	if err != nil {
+		return err
+	}
+
+	// 创建 logs 表
+	err = db.Exec(`
+        CREATE TABLE IF NOT EXISTS logs (
+            id varchar(255) NOT NULL,
+            content json NOT NULL,
+            created_at datetime NOT NULL,
+            updated_at datetime NOT NULL,
+            deleted_at datetime DEFAULT NULL,
+            PRIMARY KEY (id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='日志表';
+    `).Error
+	if err != nil {
+		return err
+	}
+
+	// 创建 user_logs 关联表
+	err = db.Exec(`
+        CREATE TABLE IF NOT EXISTS user_logs (
+            user_id int(50) UNSIGNED NOT NULL,
+            log_id varchar(255) NOT NULL,
+            PRIMARY KEY (user_id, log_id),
+            KEY log_id (log_id),
+            CONSTRAINT user_logs_ibfk_1 FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
+            CONSTRAINT user_logs_ibfk_2 FOREIGN KEY (log_id) REFERENCES logs (id) ON DELETE CASCADE ON UPDATE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户日志关联表';
+    `).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

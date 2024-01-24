@@ -7,8 +7,6 @@ import (
 )
 
 type Server interface {
-	AuthFuncOverride(ctx context.Context, fullMethodName string) (context.Context, error)
-
 	GetID(ctx context.Context) (string, error)
 	GetName(ctx context.Context) (string, error)
 	GetRoomInfo(ctx context.Context) (*room.Info, error)

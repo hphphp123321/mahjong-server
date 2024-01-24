@@ -16,7 +16,7 @@ import (
 
 	"gorm.io/plugin/dbresolver"
 
-	"github.com/hphphp123321/mahjong-server/app/entity"
+	"github.com/hphphp123321/mahjong-server/app/dao/entity"
 )
 
 func newUser(db *gorm.DB, opts ...gen.DOOption) user {

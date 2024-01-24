@@ -9,11 +9,20 @@ import (
 	"github.com/hphphp123321/mahjong-server/app/service/server"
 )
 
-func ToPbLoginReply(reply *server.LoginReply) *pb.LoginReply {
+func ToPbLoginReply(reply *server.LoginReply, token string) *pb.LoginReply {
 	return &pb.LoginReply{
 		Message:       LoginMsg(reply.ID),
 		Id:            reply.ID,
+		Token:         token,
 		ReconnectInfo: nil,
+	}
+}
+
+func ToPbRegisterReply(reply *server.RegisterReply, token string) *pb.RegisterReply {
+	return &pb.RegisterReply{
+		Message: RegisterMsg(reply.ID),
+		Id:      reply.ID,
+		Token:   token,
 	}
 }
 

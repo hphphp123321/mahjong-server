@@ -1,6 +1,7 @@
 package room
 
 import (
+	"github.com/hphphp123321/mahjong-server/app/model/game"
 	"github.com/hphphp123321/mahjong-server/app/model/player"
 	"strconv"
 )
@@ -18,4 +19,10 @@ func (r *Info) String() string {
 		playerInfos += "\n" + v.String()
 	}
 	return "RoomInfo{ID: " + r.ID + ", Name: " + r.Name + ", OwnerSeat: " + strconv.Itoa(r.OwnerSeat) + ", \nPlayerInfos: " + playerInfos + "}"
+}
+
+type GameInfo struct {
+	GameID     string
+	SeatsOrder []int
+	Result     chan game.Result
 }

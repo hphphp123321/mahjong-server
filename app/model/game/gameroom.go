@@ -102,7 +102,8 @@ func (r *GameRoom) sendErrorsExcept(seat int, err error) {
 	}
 }
 
-func (r *GameRoom) StartGame(mode int, cancelReady func()) {
+func (r *GameRoom) StartGame(mode int, cancelReady func()) chan Result {
+	var resultChan = make(chan Result, 1)
 	go func() {
 		for !r.CheckRegister() {
 			time.Sleep(time.Millisecond * 100)
@@ -113,6 +114,7 @@ func (r *GameRoom) StartGame(mode int, cancelReady func()) {
 			if err := recover(); err != nil {
 				// send end error
 				global.Log.Errorf("game end unexpect: %v", err)
+				resultChan <- Result{Err: errs.ErrGameEndUnexpect}
 			}
 		}()
 
@@ -161,12 +163,16 @@ func (r *GameRoom) StartGame(mode int, cancelReady func()) {
 				playerCall, ok = <-r.PlayersAction[r.getSeatByWind(wind)]
 				if !ok {
 					r.sendErrorsExcept(r.getSeatByWind(wind), errs.ErrGameEndUnexpect)
+					resultChan <- Result{Err: errs.ErrGameEndUnexpect}
+					return
 				}
 				// check action
 				for !playerCalls.Contains(playerCall) {
 					playerCall, ok = <-r.PlayersAction[r.getSeatByWind(wind)]
 					if !ok {
 						r.sendErrorsExcept(r.getSeatByWind(wind), errs.ErrGameEndUnexpect)
+						resultChan <- Result{Err: errs.ErrGameEndUnexpect}
+						return
 					}
 				}
 				posCall[wind] = playerCall
@@ -176,10 +182,11 @@ func (r *GameRoom) StartGame(mode int, cancelReady func()) {
 			for wind, playerCalls := range posCalls {
 				var playerCall = posCall[wind]
 				for !playerCalls.Contains(playerCall) {
-					r.sendError(r.getSeatByWind(wind), errs.ErrGameEndUnexpect)
 					playerCall, ok = <-r.PlayersAction[r.getSeatByWind(wind)]
 					if !ok {
 						r.sendErrorsExcept(r.getSeatByWind(wind), errs.ErrGameEndUnexpect)
+						resultChan <- Result{Err: errs.ErrGameEndUnexpect}
+						return
 					}
 				}
 			}
@@ -195,7 +202,15 @@ func (r *GameRoom) StartGame(mode int, cancelReady func()) {
 			r.PlayersEventsChan[seat] <- &player.GameEventChannel{Err: errs.ErrGameEnd}
 		}
 
+		// send result
+		resultChan <- Result{
+			AllEvents:  r.game.GetAllGlobalEvents(),
+			Seat2Order: r.seat2Order,
+			Err:        nil,
+		}
+
 		cancelReady()
 	}()
 
+	return resultChan
 }
