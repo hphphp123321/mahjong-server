@@ -161,12 +161,14 @@ func (r *GameRoom) StartGame(mode int, cancelReady func()) {
 				playerCall, ok = <-r.PlayersAction[r.getSeatByWind(wind)]
 				if !ok {
 					r.sendErrorsExcept(r.getSeatByWind(wind), errs.ErrGameEndUnexpect)
+					return
 				}
 				// check action
 				for !playerCalls.Contains(playerCall) {
 					playerCall, ok = <-r.PlayersAction[r.getSeatByWind(wind)]
 					if !ok {
 						r.sendErrorsExcept(r.getSeatByWind(wind), errs.ErrGameEndUnexpect)
+						return
 					}
 				}
 				posCall[wind] = playerCall
@@ -176,10 +178,10 @@ func (r *GameRoom) StartGame(mode int, cancelReady func()) {
 			for wind, playerCalls := range posCalls {
 				var playerCall = posCall[wind]
 				for !playerCalls.Contains(playerCall) {
-					r.sendError(r.getSeatByWind(wind), errs.ErrGameEndUnexpect)
 					playerCall, ok = <-r.PlayersAction[r.getSeatByWind(wind)]
 					if !ok {
 						r.sendErrorsExcept(r.getSeatByWind(wind), errs.ErrGameEndUnexpect)
+						return
 					}
 				}
 			}
