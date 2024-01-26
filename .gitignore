@@ -27,7 +27,6 @@ gen
 vendor/
 
 # Config
-config/
 *.yaml
 
 # Build

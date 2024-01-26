@@ -7,6 +7,7 @@ COPY . /mahjong-server
 # 设置工作目录
 WORKDIR /mahjong-server
 
+# 下载相关依赖
 RUN go env -w GO111MODULE=on
 RUN go env -w GOPROXY=https://goproxy.cn,direct
 RUN go mod tidy

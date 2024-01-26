@@ -1,0 +1,35 @@
+app:
+  name: mahjong-server
+  mode: prod # mode:[dev, prod, test]
+
+openai:
+  key:
+  #  model: gpt-4-0613
+  model:  gpt-3.5-turbo-0613
+  lang: en # lang:[zh, en, jp]
+  proxyUrl: env # [http://ip:port, env, none]
+
+server:
+  ip: 0.0.0.0
+  port: 16548
+  minTime: 30  # If a client pings more than once every MinTime seconds, terminate the connection
+  maxConnectionIdle: 600 # If a client is idle for Idle seconds, send a GOAWAY
+  maxConnectionAgeGrace: 15 # Allow Grace seconds for pending RPCs to complete before forcibly closing connections
+  timeTick: 10 # Ping the client if it is idle for timeTick seconds to ensure the connection is still active
+  timeout: 600 # Wait 1 second for the ping ack before assuming the connection is dead
+
+
+log-config:
+  level: INFO # 日志等级 [DEBUG, INFO, WARN, ERROR]
+  filename: ./log/1.log # 文件名
+  maxSize: 4 # 单日志文件最大尺寸 MB
+  maxAge: 30 # 最多保存天数 Day
+  maxBackups: 10 # 日志文件保存数量
+
+db-config:
+  host: 127.0.0.1
+  port: 3306
+  username:
+  password:
+  database: mahjong
+
