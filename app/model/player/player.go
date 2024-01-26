@@ -29,6 +29,7 @@ func NewRobot(robotType string) *Player {
 
 func (p *Player) GetInfo() *Info {
 	return &Info{
+		ID:    p.ID,
 		Name:  p.Name,
 		Seat:  p.Seat,
 		Ready: p.Ready,

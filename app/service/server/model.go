@@ -1,6 +1,8 @@
 package server
 
 import (
+	"encoding/json"
+	"errors"
 	"github.com/hphphp123321/mahjong-go/mahjong"
 	"github.com/hphphp123321/mahjong-server/app/model/player"
 	"github.com/hphphp123321/mahjong-server/app/model/room"
@@ -117,7 +119,60 @@ type StreamReply struct {
 }
 
 type LogContent struct {
-	Players   [4]string      `json:"players"`    // 四个玩家的名字
-	PlayerIDs [4]uint        `json:"player_ids"` // 四个玩家的ID
-	Events    mahjong.Events `json:"events"`     // 事件
+	Players   [4]string      `json:"players"`         // 四个玩家的名字
+	PlayerIDs [4]uint        `json:"player_ids"`      // 四个玩家的ID
+	Events    mahjong.Events `json:"events"`          // 事件
+	Error     error          `json:"error,omitempty"` // 错误
+}
+
+func (l *LogContent) MarshalJSON() ([]byte, error) {
+	// 在函数内部定义临时结构体
+	var tmp struct {
+		Players   [4]string      `json:"players"`
+		PlayerIDs [4]uint        `json:"player_ids"`
+		Events    mahjong.Events `json:"events"`
+		Error     string         `json:"error,omitempty"`
+	}
+
+	// 将LogContent的字段复制到临时结构体
+	tmp.Players = l.Players
+	tmp.PlayerIDs = l.PlayerIDs
+	tmp.Events = l.Events
+
+	// 特殊处理Error字段
+	if l.Error != nil {
+		tmp.Error = l.Error.Error()
+	}
+
+	// 序列化临时结构体
+	return json.Marshal(tmp)
+}
+
+func (l *LogContent) UnmarshalJSON(data []byte) error {
+	// 在函数内部定义临时结构体
+	var tmp struct {
+		Players   [4]string      `json:"players"`
+		PlayerIDs [4]uint        `json:"player_ids"`
+		Events    mahjong.Events `json:"events"`
+		Error     string         `json:"error,omitempty"`
+	}
+
+	// 反序列化到临时结构体
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+
+	// 将临时结构体的字段复制回LogContent
+	l.Players = tmp.Players
+	l.PlayerIDs = tmp.PlayerIDs
+	l.Events = tmp.Events
+
+	// 特殊处理Error字段
+	if tmp.Error != "" {
+		l.Error = errors.New(tmp.Error)
+	} else {
+		l.Error = nil
+	}
+
+	return nil
 }

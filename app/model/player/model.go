@@ -7,6 +7,7 @@ import (
 
 type Info struct {
 	Name  string
+	ID    uint
 	Seat  int
 	Ready bool
 }

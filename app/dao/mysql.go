@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"github.com/hphphp123321/mahjong-server/app/global"
@@ -13,6 +14,7 @@ import (
 
 var DB *sql.DB
 var GormDB *gorm.DB
+var DBCtx context.Context = context.Background()
 
 // InitMySql 初始化MySQL数据库连接
 func InitMySql() (err error) {

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/hphphp123321/mahjong-server/app/dao"
 	"github.com/hphphp123321/mahjong-server/app/dao/entity"
 	"github.com/hphphp123321/mahjong-server/app/dao/query"
 	"net"
@@ -144,7 +145,7 @@ func (i *ImplServer) getRoom(ctx context.Context) (*room.Room, error) {
 func (i *ImplServer) Login(ctx context.Context, request *LoginRequest) (reply *LoginReply, err error) {
 
 	// 检查用户名是否存在
-	user, err := query.User.WithContext(ctx).Where(query.User.Name.Eq(request.Name)).First()
+	user, err := query.User.WithContext(dao.DBCtx).Where(query.User.Name.Eq(request.Name)).First()
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +211,7 @@ func (i *ImplServer) Register(ctx context.Context, request *RegisterRequest) (re
 		Logs:     nil,
 	}
 	// 检查用户名是否已存在
-	count, err := query.User.WithContext(ctx).Where(query.User.Name.Eq(request.Name)).Count()
+	count, err := query.User.WithContext(dao.DBCtx).Where(query.User.Name.Eq(request.Name)).Count()
 	if err != nil {
 		return nil, err
 	}
@@ -219,7 +220,7 @@ func (i *ImplServer) Register(ctx context.Context, request *RegisterRequest) (re
 	}
 
 	// 创建用户
-	if err := query.User.WithContext(ctx).Create(newUser); err != nil {
+	if err := query.User.WithContext(dao.DBCtx).Create(newUser); err != nil {
 		return nil, err
 	}
 
@@ -556,17 +557,22 @@ func (i *ImplServer) ProcessGameResult(ctx context.Context, gameInfo *room.GameI
 	}
 	var result = gameInfo.Result
 	var gameID = gameInfo.GameID
+	var playerInfos = map[int]*player.Info{}
+	for _, p := range pRoom.Players {
+		playerInfos[p.Seat] = p.GetInfo()
+	}
 	go func() {
+		var logContent = &LogContent{}
 		select {
 		case r := <-result:
 			if r.Err != nil {
-				global.Log.Warnf("game end error: %v", r.Err)
-				return
+				global.Log.Warnf("game %s end error: %v", gameID, r.Err)
+				logContent.Error = r.Err
 			}
-			global.Log.Debugln("game end")
+			global.Log.Debugf("game %s end", gameID)
 			var playerIDs = [4]uint{0, 0, 0, 0}
 			var players = [4]string{"", "", "", ""}
-			for _, p := range pRoom.Players {
+			for _, p := range playerInfos {
 				pSeat := p.Seat
 				pOrder := r.Seat2Order[pSeat]
 				if p.ID != 0 {
@@ -576,11 +582,10 @@ func (i *ImplServer) ProcessGameResult(ctx context.Context, gameInfo *room.GameI
 			}
 
 			// log in database
-			var logContent = &LogContent{
-				Players:   players,
-				PlayerIDs: playerIDs,
-				Events:    r.AllEvents,
-			}
+			logContent.Players = players
+			logContent.PlayerIDs = playerIDs
+			logContent.Events = r.AllEvents
+
 			logContentJson, err := json.Marshal(logContent)
 			if err != nil {
 				global.Log.Warnf("marshal log content error: %v", err)
@@ -589,7 +594,7 @@ func (i *ImplServer) ProcessGameResult(ctx context.Context, gameInfo *room.GameI
 
 			var entityUsers = make([]*entity.User, 0)
 			for _, pID := range pRoom.ListPlayerIDs() {
-				user, err := query.User.WithContext(ctx).Where(query.User.ID.Eq(pID)).First()
+				user, err := query.User.WithContext(dao.DBCtx).Where(query.User.ID.Eq(pID)).First()
 				if err != nil {
 					global.Log.Warnf("get user error: %v", err)
 					continue
@@ -602,7 +607,7 @@ func (i *ImplServer) ProcessGameResult(ctx context.Context, gameInfo *room.GameI
 				Users:   entityUsers,
 			}
 
-			if err := query.Log.WithContext(ctx).Create(entityLog); err != nil {
+			if err := query.Log.WithContext(dao.DBCtx).Create(entityLog); err != nil {
 				global.Log.Warnf("create log error: %v", err)
 				return
 			}
